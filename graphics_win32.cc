@@ -177,198 +177,7 @@ void VulkanDraw ()
 {
 }
 
-#include <d3d11.h>
-#include <d3dx11.h>
-#include <d3dx10.h>
-#include <d3dcompiler.h>
-
-struct renderer_state
-{
-	IDXGISwapChain *SwapChain;
-	ID3D11Device *Device;
-	ID3D11DeviceContext *DeviceContext;
-
-	ID3D11RenderTargetView *BackBuffer;
-	ID3D11Buffer *VertexBuffer;
-};
-
-struct texture
-{
-	int Width;
-	int Height;
-};
-
-struct render_buffer
-{
-	
-};
-
-struct color
-{
-	float R;
-	float G;
-	float B;
-	float A;
-};
-
-struct r_vertex
-{
-	float X;
-	float Y;
-	float Z;
-	float Color[4];
-};
-
-struct matrix_contant_buffer
-{
-	float MatProjection[16];
-};
-
-void DX11Init (renderer_state *Renderer, HWND hwnd)
-{
-	// Create device
-	DXGI_SWAP_CHAIN_DESC SwapChainDesc;
-	ZeroMemory(&SwapChainDesc, sizeof(DXGI_SWAP_CHAIN_DESC));
-
-	SwapChainDesc.BufferCount = 1;
-	SwapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	SwapChainDesc.OutputWindow = hwnd;
-	SwapChainDesc.SampleDesc.Count = 4;
-	SwapChainDesc.Windowed = TRUE;
-
-	//IDXGISwapChain SwapChain;
-
-	D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL,
-		D3D11_SDK_VERSION, &SwapChainDesc, &Renderer->SwapChain, &Renderer->Device,
-		NULL, &Renderer->DeviceContext);
-
-	// Render target
-	ID3D11Texture2D *BackBufferTexture;
-	Renderer->SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&BackBufferTexture);
-
-	Renderer->Device->CreateRenderTargetView(BackBufferTexture, NULL, &Renderer->BackBuffer);
-	BackBufferTexture->Release();
-
-	Renderer->DeviceContext->OMSetRenderTargets(1, &Renderer->BackBuffer, NULL);
-
-	// Viewport
-	D3D11_VIEWPORT Viewport;
-	ZeroMemory(&Viewport, sizeof(D3D11_VIEWPORT));
-
-	Viewport.TopLeftX = 0;
-	Viewport.TopLeftY = 0;
-	Viewport.Width = 1280;
-	Viewport.Height = 720;
-
-	Renderer->DeviceContext->RSSetViewports(1, &Viewport);
-
-	D3DXMATRIX OrthoMatrix;
-	D3DXMatrixOrthoLH(&OrthoMatrix, 1280, 720, -10, 10);
-	//D3DXMatrixOrthoOffCenterRH(&OrthoMatrix, 0, 1280, 0, 720, -10, 10);
-
-	// Temp
-	ID3D10Blob *VertexShaderBlob;
-	ID3D10Blob *PixelShaderBlob;
-	HRESULT VertexHr = S_OK;
-	HRESULT PixelHr = S_OK;
-	ID3DBlob *VertexErrorBlob;
-	ID3DBlob *PixelErrorBlob;
-	VertexHr = D3DX11CompileFromFile("../shader.hlsl", 0, 0, "VertexasdShader",
-		"vs_4_0", D3DCOMPILE_DEBUG, 0, 0, &VertexShaderBlob, &VertexErrorBlob, 0);
-	PixelHr = D3DX11CompileFromFile("../shader.hlsl", 0, 0, "PixelasdShader",
-		"ps_4_0", D3DCOMPILE_DEBUG, 0, 0, &PixelShaderBlob, &PixelErrorBlob, 0);
-
-	if (FAILED(VertexHr))
-	{
-		if (VertexErrorBlob != NULL)
-		{
-			OutputDebugString((char*)VertexErrorBlob->GetBufferPointer());
-		}
-	}
-
-	ID3D11VertexShader *VertexShader;
-	ID3D11PixelShader *PixelShader;
-	Renderer->Device->CreateVertexShader(VertexShaderBlob->GetBufferPointer(),
-		VertexShaderBlob->GetBufferSize(),
-		NULL,
-		&VertexShader);
-	Renderer->Device->CreatePixelShader(PixelShaderBlob->GetBufferPointer(),
-		PixelShaderBlob->GetBufferSize(),
-		NULL,
-		&PixelShader);
-
-	Renderer->DeviceContext->VSSetShader(VertexShader, 0, 0);
-	Renderer->DeviceContext->PSSetShader(PixelShader, 0, 0);
-
-	r_vertex Vertices[]=
-	{
-		{ 0.0f, 100.0f, 0.0f, {1.0f, 0.0f, 0.0f, 1.0f} },
-		{ 100.0f, 100.0f, 0.0f, {0.0f, 1.0f, 0.0f, 1.0f} },
-		{ 0.0f, 0.0f, 0.0f, {1.0f, 0.0f, 1.0f, 1.0f} },
-		{ 100.0f, 0.0f, 0.0f, {0.0f, 0.0f, 1.0f, 1.0f} }
-	};
-
-	ID3D11Buffer *VertexBuffer;
-	D3D11_BUFFER_DESC BufferDesc;
-	ZeroMemory(&BufferDesc, sizeof(D3D11_BUFFER_DESC));
-
-	BufferDesc.Usage = D3D11_USAGE_DYNAMIC; // Might want to change this
-	BufferDesc.ByteWidth = sizeof(r_vertex) * 4;
-	BufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	BufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-	Renderer->Device->CreateBuffer(&BufferDesc, NULL, &VertexBuffer);
-
-	D3D11_MAPPED_SUBRESOURCE MappedBuffer;
-	Renderer->DeviceContext->Map(VertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &MappedBuffer);
-	memcpy(MappedBuffer.pData, Vertices, sizeof(Vertices));
-	Renderer->DeviceContext->Unmap(VertexBuffer, NULL);
-
-	ID3D11InputLayout *Layout;
-	D3D11_INPUT_ELEMENT_DESC InputDesc[]=
-	{
-		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
-	};
-
-	Renderer->Device->CreateInputLayout(InputDesc, 2, VertexShaderBlob->GetBufferPointer(),
-		VertexShaderBlob->GetBufferSize(), &Layout);
-	Renderer->DeviceContext->IASetInputLayout(Layout);
-
-	Renderer->VertexBuffer = VertexBuffer;
-
-	// Contant buffer
-	ID3D11Buffer *ContantBuffer;
-	D3D11_BUFFER_DESC ContantBufferDesc;
-	ZeroMemory(&ContantBufferDesc, sizeof(ContantBufferDesc));
-	ContantBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	ContantBufferDesc.ByteWidth = 64;
-	ContantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	Renderer->Device->CreateBuffer(&ContantBufferDesc, NULL, &ContantBuffer);
-
-	Renderer->DeviceContext->VSSetConstantBuffers(0, 1, &ContantBuffer);
-
-	// matrix_contant_buffer Matrix;
-	// Matrix.MatProjection
-
-	Renderer->DeviceContext->UpdateSubresource(ContantBuffer, 0, 0, &OrthoMatrix, 0, 0);
-}
-
-void DX11Draw (renderer_state *Renderer)
-{
-	float ClearColor[4] = {0.0f, 0.2f, 0.2f, 1.0f};
-	Renderer->DeviceContext->ClearRenderTargetView(Renderer->BackBuffer,
-		ClearColor);
-
-	UINT Stride = sizeof(r_vertex);
-	UINT Offset = 0;
-	Renderer->DeviceContext->IASetVertexBuffers(0, 1, &Renderer->VertexBuffer, &Stride, &Offset);
-	Renderer->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	Renderer->DeviceContext->Draw(4, 0);
-
-	Renderer->SwapChain->Present(0, 0);
-}
+#include "directx11.cc"
 
 LRESULT CALLBACK WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -398,20 +207,24 @@ int CALLBACK WinMain (HINSTANCE hInstance,
 	WindowClass.hInstance = hInstance;
 	WindowClass.lpszClassName = "WindowClass";
 
-	HWND Window = {};
+	HWND Window;
 
-	renderer_state renderer = {};
+	dx_state dx = {};
 
 	if (RegisterClassA(&WindowClass))
 	{
 		Window = CreateWindowExA(0, WindowClass.lpszClassName, "Graphics Demo", WS_OVERLAPPEDWINDOW|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, 0, 0, hInstance, 0);
+
+		// DWORD style = GetWindowLong(Window, GWL_STYLE);
+		// SetWindowLong(Window, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
 
 		if (Window)
 		{
 			UpdateWindow(Window);
 
 			// VulkanInit(hInstance, Window);
-			DX11Init(&renderer, Window);
+			dx.hwnd = Window;
+			DX11Init(&dx);
 
 			while (running)
 			{
@@ -422,7 +235,7 @@ int CALLBACK WinMain (HINSTANCE hInstance,
 					DispatchMessage(&msg);
 				}
 
-				DX11Draw(&renderer);
+				DX11Draw(&dx);
 			}
 		}
 	}
