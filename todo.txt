@@ -1,0 +1,11 @@
+
+Todo
+  Build out some simple corridors
+  Finish simple lighting
+  Shadows, maybe try differnet techniques, shadow maps to start
+
+Idea for demo
+  You are on a spaceship with access to some corridors with some interesting lighting.
+  The ship is in an asteroid field which you can see through a window.
+  The window could have slight reflections.
+  The fallout style terminal idea can be a ship computer.
