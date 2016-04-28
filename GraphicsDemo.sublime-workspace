@@ -1,0 +1,762 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"Vector",
+				"VectorRelativeAngle"
+			],
+			[
+				"Playing",
+				"PlayingSound"
+			],
+			[
+				"SAMPLES",
+				"SAMPLE_BYTES"
+			],
+			[
+				"SAME",
+				"SAMPLE_BYTES"
+			],
+			[
+				"AudioBuffer",
+				"AudioBufferSizeBytes"
+			],
+			[
+				"AUDIO",
+				"AUDIO_BUFFER_SIZE_SECONDS"
+			],
+			[
+				"C",
+				"CHANNEL_SAMPLE_BITS"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "code/graphics_win32.cc",
+			"settings":
+			{
+				"buffer_size": 9704,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "The system cannot find the path specified.\n[Finished in 0.0s with exit code 1]\n[shell_cmd: /code/build.bat]\n[dir: W:\\GraphicsDemo\\code]\n[path: C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Common7\\IDE\\CommonExtensions\\Microsoft\\TestWindow;C:\\Program Files (x86)\\MSBuild\\12.0\\bin\\amd64;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\BIN\\amd64;C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\VCPackages;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Common7\\IDE;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Common7\\Tools;C:\\Program Files (x86)\\HTML Help Workshop;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Team Tools\\Performance Tools\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Team Tools\\Performance Tools;C:\\Program Files (x86)\\Windows Kits\\8.1\\bin\\x64;C:\\Program Files (x86)\\Windows Kits\\8.1\\bin\\x86;C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v8.1A\\bin\\NETFX 4.5.1 Tools\\x64\\;C:\\VulkanSDK\\1.0.3.1\\Bin;C:\\VulkanSDK\\1.0.3.1\\Bin32;C:\\ProgramData\\Oracle\\Java\\javapath;C:\\Program Files\\Broadcom\\Broadcom 802.11 Network Adapter\\Driver;;C:\\Program Files (x86)\\Intel\\iCLS Client\\;C:\\Program Files\\Intel\\iCLS Client\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files\\WIDCOMM\\Bluetooth Software\\;C:\\Program Files\\WIDCOMM\\Bluetooth Software\\syswow64;;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit\\;C:\\Program Files\\Microsoft SQL Server\\110\\Tools\\Binn\\;C:\\Program Files (x86)\\Microsoft SDKs\\TypeScript\\1.0\\;C:\\Program Files (x86)\\Visual Leak Detector\\bin\\Win32;C:\\Program Files (x86)\\Visual Leak Detector\\bin\\Win64;C:\\Program Files (x86)\\Google\\Chrome\\Application;C:\\Program Files\\Broadcom\\Broadcom 802.11 Network Adapter\\Driver;C:\\Program Files (x86)\\Intel\\iCLS Client\\;C:\\Program Files\\Intel\\iCLS Client\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files\\WIDCOMM\\Bluetooth Software\\;C:\\Program Files\\WIDCOMM\\Bluetooth Software\\syswow64;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit\\;C:\\Users\\Matt\\AppData\\Local\\Programs\\Git\\cmd;C:\\Program Files (x86)\\youtube-dl;C:\\Program Files (x86)\\Microsoft DirectX SDK (June 2010)\\Include;C:\\Program Files (x86)\\Microsoft DirectX SDK (June 2010)\\Lib]",
+			"settings":
+			{
+				"buffer_size": 3017,
+				"line_ending": "Unix",
+				"name": "Build output",
+				"scratch": true
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"last_filter": "package",
+		"selected_items":
+		[
+			[
+				"package",
+				"Package Control: Install Package"
+			],
+			[
+				"todo",
+				"TodoReview: Project Files"
+			],
+			[
+				"packagere",
+				"PackageResourceViewer: Open Resource"
+			]
+		],
+		"width": 400.0
+	},
+	"console":
+	{
+		"height": 132.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/W/GraphicsDemo",
+		"/W/GraphicsDemo/code"
+	],
+	"file_history":
+	[
+		"/C/Users/Matt/AppData/Roaming/Sublime Text 3/Packages/User/NewBuildSystem.sublime-build",
+		"/W/SpaceGame/code/render_opengl.cc",
+		"/C/Users/Matt/AppData/Roaming/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/W/SpaceGame/backup.bat",
+		"/W/SpaceGame/code/render_opengl.h",
+		"/W/SpaceGame/code/asset.cc",
+		"/W/SpaceGame/code/dsound.cc",
+		"/W/SpaceGame/code/game.cc",
+		"/W/SpaceGame/code/win32.cc",
+		"/W/WebsiteTools/code/shared.cc",
+		"/W/WebsiteTools/code/main.cc",
+		"/W/SpaceGame/code/build_release.bat",
+		"/W/SpaceGame/code/asset.h",
+		"/W/SpaceGame/code/dsound.h",
+		"/W/SpaceGame/code/asset_shared.h",
+		"/W/lib/stb_image.h",
+		"/W/SpaceGame/code/win32.h",
+		"/W/SpaceGame/code/gui.cc",
+		"/W/SpaceGame/code/math.cc",
+		"/W/SpaceGame/code/memory.cc",
+		"/W/SpaceGame/code/platform.cc",
+		"/W/SpaceGame/code/TODO",
+		"/W/SpaceGame/code/debug.cc",
+		"/W/SpaceGame/code/build.bat",
+		"/W/SpaceGame/shader_data.h",
+		"/W/SpaceGame/code/entity.cc",
+		"/W/SpaceGame/code/entity_sim.cc",
+		"/W/SpaceGame/code/game.h",
+		"/W/SpaceGame/code/platform.h",
+		"/W/SpaceGame/code/gamedef.h",
+		"/W/SpaceGame/code/asset_packer/asset_packer.cc",
+		"/W/SpaceGame/code/shaders/default.vert",
+		"/W/SpaceGame/code/shaders/quad.frag",
+		"/W/SpaceGame/code/shaders/quad.shader",
+		"/W/SpaceGame/code/asset_packer/shader_processor.cc",
+		"/W/SpaceGame/code/shaders/model.vert",
+		"/W/SpaceGame/code/shaders/model.frag",
+		"/W/SpaceGame/build/assets/models/cube2.obj",
+		"/W/SpaceGame/code/opengl_extensions.h",
+		"/W/SpaceGame/code/entity.h",
+		"/W/SpaceGame/build/assets/models/cube.obj",
+		"/W/SpaceGame/build/assets/models/station.obj",
+		"/W/SpaceGame/code/asset_packer/build.bat",
+		"/C/Program Files (x86)/OpenAL 1.1 SDK/include/al.h",
+		"/C/Program Files (x86)/OpenAL 1.1 SDK/include/alc.h",
+		"/C/Program Files (x86)/OpenAL 1.1 SDK/include/efx.h",
+		"/W/SpaceGame/build/assets/models/test.obj",
+		"/W/SpaceGame/build/assets/models/test.fbx",
+		"/W/SpaceGame/build/assets/models/test2.obj",
+		"/W/SpaceGame/build/assets/models/test.mtl",
+		"/W/WebsiteTools/code/main.c",
+		"/C/VulkanSDK/1.0.3.1/Demos/tri.c",
+		"/W/VulkanDemo/build/vulkan_loader.cc",
+		"/W/SpaceGame/code/renderer.cc",
+		"/W/SpaceGame/code/renderer.h",
+		"/W/SpaceGame/code/shaders/sprite_diffuse.vert",
+		"/W/SpaceGame/build/assets/test.mesh",
+		"/C/Users/Matt/AppData/Roaming/Sublime Text 3/Packages/Color Scheme - Default/Zenburnesque.tmTheme",
+		"/C/Users/Matt/AppData/Roaming/Sublime Text 3/Packages/Color Scheme - Default/Monokai Bright.tmTheme",
+		"/C/Users/Matt/AppData/Roaming/Sublime Text 3/Packages/Color Scheme - Default/Monokai.tmTheme",
+		"/W/SpaceGame/sublime.bat",
+		"/W/SpaceGame/code/items.h",
+		"/C/Users/Matt/VirtualBox VMs/Ubuntu/Ubuntu.vbox",
+		"/W/SiteGenerator/build/giantjelly/template.html",
+		"/W/SiteGenerator/build/giantjelly/index.html",
+		"/W/SiteGenerator/build/giantjelly/posts/ludumdare-and-jellymoon-dev.html",
+		"/C/Users/Matt/youtube_cmd/youtube-dl.bat",
+		"/W/SpaceGame/code/sound.h",
+		"/W/SpaceGame/code/sound.cc",
+		"/W/SpaceGame/game.sublime-build",
+		"/C/Users/Matt/Documents/game.sublime-build",
+		"/C/Users/Matt/AppData/Roaming/Sublime Text 3/Packages/Default/Preferences.sublime-settings"
+	],
+	"find":
+	{
+		"height": 24.0
+	},
+	"find_in_files":
+	{
+		"height": 90.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"Entity_Character",
+			"RState",
+			"PushFont",
+			"AddBattleZone",
+			"simregionentitycount",
+			"init",
+			"collision",
+			"LogInfo",
+			"GetElementOrCreate",
+			"TimeData",
+			";\n",
+			"AddParticle",
+			"R_GetErrorsASD",
+			"entity_character",
+			"AddCharacter",
+			"Platform->",
+			"Game->",
+			"AssetMemory",
+			"RenderArena",
+			"TransientMemory",
+			"Game->SimArena",
+			"LoadFromAssetPack",
+			"strlen",
+			"FileRead",
+			"RState",
+			"Game",
+			"RState",
+			"S_Play",
+			");\n",
+			"S_Play",
+			"game_state",
+			"S_Play",
+			"updateandrender",
+			"S_LoadAudioAssets",
+			"Font_Init",
+			"stbi_load",
+			"#pragma",
+			"SHADER_PATH",
+			"DebugGuiGroup",
+			"DebugValue",
+			"init",
+			"TimeIndex",
+			"currentParent",
+			"DebugGuiFlush",
+			"DebugGuiIndent",
+			"GetTextDim",
+			"RenderedHeight",
+			"_PushFont",
+			"TODO",
+			"RandomStation",
+			"game_state",
+			"DebugGuiText",
+			"$",
+			"simpleRec",
+			"BoundingBox",
+			"R_GetErrorsASD",
+			"Platform",
+			"CreateOpenglContext",
+			"malloc",
+			"OSMemoryAlloc",
+			"VirtualAlloc",
+			"LogInfo",
+			"malloc",
+			"OSMemoryAlloc",
+			"VirtualAlloc",
+			"InitWorld",
+			"Init",
+			"restartline",
+			"GetToken",
+			"LoadMenuConfig",
+			"FileName",
+			"Url",
+			"blog",
+			"GetPrintDate",
+			"Url",
+			"No such",
+			"ReadFileDataOrError",
+			"page ",
+			"pageList.",
+			"pageList",
+			"VirtualAlloc",
+			"ReadFileDataOrError",
+			"fputs",
+			"StringChars",
+			"printf",
+			"file_list",
+			"directory_list",
+			"DateString",
+			"strcmp",
+			"WINDOWS",
+			"demo_prepare_shader_module",
+			"COLOR_",
+			"VK_STRUCTURE_TYPE_WIN_SURFACE_CREATE_INFO_KHR",
+			"FramesPerSecond",
+			"DebugValue",
+			"Failed to get file info",
+			"debug_info",
+			"Active = 0",
+			"GridCellCount",
+			"PARTICLE_COUNT",
+			"Renderer",
+			"Game->RendererOffset",
+			"AddDebris",
+			"Debris",
+			"DrawDebug",
+			"LoadSimplePoint",
+			"CharacterFireWeapons",
+			"DebugRenderCollider",
+			"Player",
+			"AddEntity",
+			"GetPlayer",
+			"AddPlayer",
+			"EntityCount",
+			"PLAYER_COUINT",
+			"CameraOffset",
+			"#include",
+			"RenderBuffer",
+			"StarMap",
+			"memory",
+			"GetShader",
+			"struct shader",
+			"shader",
+			"SCALE_IDENTITY",
+			"DrawStaticDebugQuad",
+			"Font",
+			"s.y",
+			"Descent",
+			"Ascent"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "code/graphics_win32.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9704,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3017,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3017,
+								3017
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 24.0
+	},
+	"input":
+	{
+		"height": 32.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": false,
+	"output.exec":
+	{
+		"height": 26.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "Packages/User/NewBuildSystem.sublime-build",
+	"project": "GraphicsDemo.sublime-project",
+	"replace":
+	{
+		"height": 44.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"openg",
+				"code\\render_opengl.h"
+			],
+			[
+				"entity",
+				"code\\entity_sim.cc"
+			],
+			[
+				"game",
+				"code\\game.cc"
+			],
+			[
+				"opengl",
+				"code\\render_opengl.cc"
+			],
+			[
+				"debug",
+				"code\\debug.cc"
+			],
+			[
+				"math",
+				"code\\math.cc"
+			],
+			[
+				"win32",
+				"code\\win32.cc"
+			],
+			[
+				"enitty",
+				"code\\entity.h"
+			],
+			[
+				"oepngl",
+				"code\\render_opengl.h"
+			],
+			[
+				"gae",
+				"code\\game.cc"
+			],
+			[
+				"rende",
+				"code\\render_opengl.h"
+			],
+			[
+				"asset",
+				"code\\asset.h"
+			],
+			[
+				"open",
+				"code\\render_opengl.cc"
+			],
+			[
+				"build",
+				"code\\build.bat"
+			],
+			[
+				"dsound",
+				"code\\dsound.cc"
+			],
+			[
+				"",
+				"code\\entity_sim.cc"
+			],
+			[
+				"asset_share",
+				"code\\asset_shared.h"
+			],
+			[
+				"rener",
+				"code\\render_opengl.h"
+			],
+			[
+				"render",
+				"code\\render_opengl.cc"
+			],
+			[
+				"todo",
+				"code\\TODO"
+			],
+			[
+				"gmae",
+				"code\\game.cc"
+			],
+			[
+				"memory",
+				"code\\memory.cc"
+			],
+			[
+				"gui",
+				"code\\gui.cc"
+			],
+			[
+				"memor",
+				"code\\memory.cc"
+			],
+			[
+				"asset_shared",
+				"code\\asset_shared.h"
+			],
+			[
+				"ass",
+				"code\\asset_shared.h"
+			],
+			[
+				"asset.h",
+				"code\\asset.h"
+			],
+			[
+				"asset_packer",
+				"code\\asset_packer\\asset_packer.cc"
+			],
+			[
+				"shared",
+				"code\\asset_packer\\shared.cc"
+			],
+			[
+				"shaderpro",
+				"code\\asset_packer\\shader_processor.cc"
+			],
+			[
+				"sahder_data",
+				"shader_data.h"
+			],
+			[
+				"sahderproce",
+				"code\\asset_packer\\shader_processor.cc"
+			],
+			[
+				"shaderproc",
+				"code\\asset_packer\\shader_processor.cc"
+			],
+			[
+				"shaderpr",
+				"code\\asset_packer\\shader_processor.cc"
+			],
+			[
+				"asset.",
+				"code\\asset.cc"
+			],
+			[
+				"shader",
+				"shader_data.h"
+			],
+			[
+				"shaderproces",
+				"code\\asset_packer\\shader_processor.cc"
+			],
+			[
+				"quad",
+				"code\\shaders\\quad.shader"
+			],
+			[
+				"shaderproce",
+				"code\\asset_packer\\shader_processor.cc"
+			],
+			[
+				"assetpacker",
+				"code\\asset_packer\\asset_packer.cc"
+			],
+			[
+				"asset_shade",
+				"code\\asset_shared.h"
+			],
+			[
+				"gam",
+				"code\\game.cc"
+			],
+			[
+				"dsund",
+				"code\\dsound.h"
+			],
+			[
+				"aset",
+				"code\\asset.cc"
+			],
+			[
+				"asset_shar",
+				"code\\asset_shared.h"
+			],
+			[
+				"gamedef",
+				"code\\gamedef.h"
+			],
+			[
+				"asset_s",
+				"code\\asset_shared.h"
+			],
+			[
+				"asset_sha",
+				"code\\asset_shared.h"
+			],
+			[
+				"bui",
+				"code\\build_release.bat"
+			],
+			[
+				"asset_sa",
+				"code\\asset_shared.h"
+			],
+			[
+				"asset_",
+				"code\\asset_shared.h"
+			],
+			[
+				"platfo",
+				"code\\platform.h"
+			],
+			[
+				"as",
+				"code\\asset_shared.h"
+			],
+			[
+				"new",
+				"C:\\Users\\Matt\\AppData\\Roaming\\Sublime Text 3\\Packages\\User\\NewBuildSystem.sublime-build"
+			],
+			[
+				"platform",
+				"code\\platform.cc"
+			],
+			[
+				"platof",
+				"code\\platform.cc"
+			],
+			[
+				"platfomr",
+				"code\\platform.h"
+			],
+			[
+				"gamede",
+				"code\\gamedef.h"
+			],
+			[
+				"platfor",
+				"code\\platform.h"
+			],
+			[
+				"win",
+				"code\\win32.h"
+			],
+			[
+				"entity_",
+				"code\\entity_sim.cc"
+			],
+			[
+				"ga",
+				"code\\game.cc"
+			],
+			[
+				"oengl",
+				"code\\render_opengl.h"
+			],
+			[
+				"model",
+				"code\\shaders\\model.frag"
+			],
+			[
+				"cube",
+				"W:\\SpaceGame\\build\\assets\\models\\cube.obj"
+			],
+			[
+				"entity_si",
+				"code\\entity_sim.cc"
+			],
+			[
+				"mo",
+				"code\\shaders\\model.frag"
+			],
+			[
+				"station",
+				"W:\\SpaceGame\\build\\assets\\models\\station.obj"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 104.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 392.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 259.0,
+	"status_bar_visible": false,
+	"template_settings":
+	{
+	}
+}

@@ -106,6 +106,8 @@ void DX11Init (dx_state *dx)
 
 	D3DXMATRIX OrthoMatrix;
 	D3DXMatrixOrthoLH(&OrthoMatrix, 1280, 720, -20, 20);
+
+
 	//D3DXMatrixOrthoOffCenterRH(&OrthoMatrix, 0, 1280, 0, 720, -10, 10);
 
 	// Temp
@@ -115,13 +117,13 @@ void DX11Init (dx_state *dx)
 	HRESULT PixelHr = S_OK;
 	ID3DBlob *VertexErrorBlob;
 	ID3DBlob *PixelErrorBlob;
-	VertexHr = D3DX11CompileFromFile("../shader.hlsl", 0, 0, "VertexasdShader",
+	VertexHr = D3DX11CompileFromFile("../code/shader.hlsl", 0, 0, "VertexasdShader",
 															 "vs_4_0",
 															 D3DCOMPILE_DEBUG,
 															 0, 0,
 															 &VertexShaderBlob,
 															 &VertexErrorBlob, 0);
-	PixelHr = D3DX11CompileFromFile("../shader.hlsl", 0, 0, "PixelasdShader",
+	PixelHr = D3DX11CompileFromFile("../code/shader.hlsl", 0, 0, "PixelasdShader",
 															"ps_4_0",
 															D3DCOMPILE_DEBUG,
 															0, 0,

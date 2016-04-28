@@ -10,8 +10,6 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include "w:/lib/vulkan/vulkan.h"
 
-bool running = TRUE;
-
 void VulkanInit (HINSTANCE hInstance, HWND hwnd)
 {
 	VkInstanceCreateInfo instanceCreateInfo = {};
@@ -175,74 +173,4 @@ void VulkanInit (HINSTANCE hInstance, HWND hwnd)
 
 void VulkanDraw ()
 {
-}
-
-#include "directx11.cc"
-
-LRESULT CALLBACK WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg) {
-		case WM_CLOSE: {
-			running = FALSE;
-		} break;
-		case WM_DESTROY: {
-			running = FALSE;
-		} break;
-		default: {
-			return DefWindowProc(hwnd, uMsg, wParam, lParam);
-		} break;
-	}
-
-	return 0;
-}
-
-int CALLBACK WinMain (HINSTANCE hInstance,
-					  HINSTANCE hPrevInstance,
-					  LPSTR lpCmdLine,
-					  int nCmdShow)
-{
-	WNDCLASS WindowClass = {};
-	WindowClass.style = CS_OWNDC|CS_HREDRAW|CS_VREDRAW;
-	WindowClass.lpfnWndProc = WindowProc;
-	WindowClass.hInstance = hInstance;
-	WindowClass.lpszClassName = "WindowClass";
-
-	HWND Window;
-
-	dx_state dx = {};
-
-	if (RegisterClassA(&WindowClass))
-	{
-		Window = CreateWindowExA(0, WindowClass.lpszClassName, "Graphics Demo", WS_OVERLAPPEDWINDOW|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, 0, 0, hInstance, 0);
-
-		// DWORD style = GetWindowLong(Window, GWL_STYLE);
-		// SetWindowLong(Window, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
-
-		if (Window)
-		{
-			UpdateWindow(Window);
-
-			// VulkanInit(hInstance, Window);
-			dx.hwnd = Window;
-			DX11Init(&dx);
-
-			while (running)
-			{
-				MSG msg;
-				while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-				{
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
-				}
-
-				DX11Draw(&dx);
-			}
-		}
-	}
-	else
-	{
-		OutputDebugString("Failed to register window class \n");
-	}
-
-	return 0;
 }
