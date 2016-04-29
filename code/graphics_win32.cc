@@ -10,8 +10,13 @@
 #ifdef RENDER_OPENGL
 #include <GL/gl.h> // windows.h must be included before gl.h
 #include <GL/glu.h>
+#endif
 #undef near // FUCK YOU WINDOWS!!!
 #undef far
+
+#include "gj_lib.h"
+
+#ifdef RENDER_OPENGL
 #include "opengl.cc"
 #endif
 #ifdef RENDER_DIRECTX
@@ -19,12 +24,6 @@
 #endif
 
 bool running = true;
-
-// #define RENDER_DIRECTX
-// #define RENDER_OPENGL
-
-struct Test_Struct {
-};
 
 LRESULT CALLBACK WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

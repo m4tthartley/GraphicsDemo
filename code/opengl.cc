@@ -38,11 +38,53 @@ union Mat4 {
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
 #define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
 
+#define GL_FRAGMENT_SHADER 0x8B30
+#define GL_VERTEX_SHADER 0x8B31
+
+typedef char GLchar;
+
 typedef HGLRC WINAPI wglCreateContextAttribsARB_proc (HDC hdc, HGLRC sharedContext, const int *attribList);
 wglCreateContextAttribsARB_proc *wglCreateContextAttribsARB;
 
-/*typedef void gluPerspective_proc (GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar);
-gluPerspective_proc *gluPerspective;*/
+typedef GLuint glCreateShader_proc (GLenum shaderType);
+glCreateShader_proc *glCreateShader;
+
+typedef void glShaderSource_proc (GLuint shader, GLsizei count, const GLchar *const *string, const GLint *length);
+glShaderSource_proc *glShaderSource;
+
+typedef void glCompileShader_proc (GLuint shader);
+glCompileShader_proc *glCompileShader;
+
+typedef GLuint glCreateProgram_proc ();
+glCreateProgram_proc *glCreateProgram;
+
+typedef void glAttachShader_proc (GLuint program, GLuint shader);
+glAttachShader_proc *glAttachShader;
+
+typedef void glLinkProgram_proc (GLuint program);
+glLinkProgram_proc *glLinkProgram;
+
+typedef void glUseProgram_proc (GLuint program);
+glUseProgram_proc *glUseProgram;
+
+typedef void glGetShaderInfoLog_proc (GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+glGetShaderInfoLog_proc *glGetShaderInfoLog;
+
+gj_Mem_Stack globalMemStack;
+GLuint globalShaderProgram;
+
+void loadOpenglExtensions () {
+	#define loadExtension(name) name = null; name = (name##_proc*)wglGetProcAddress(#name); assert(name);
+
+	loadExtension(glCreateShader);
+	loadExtension(glShaderSource);
+	loadExtension(glCompileShader);
+	loadExtension(glCreateProgram);
+	loadExtension(glAttachShader);
+	loadExtension(glLinkProgram);
+	loadExtension(glUseProgram);
+	loadExtension(glGetShaderInfoLog);
+}
 
 void createWin32OpenglContext (HWND windowHandle) {
 	HDC hdc = GetDC(windowHandle);
@@ -88,7 +130,7 @@ void createWin32OpenglContext (HWND windowHandle) {
 
 				wglMakeCurrent(hdc, glContext);
 
-				// gluPerspective = (gluPerspective_proc*)wglGetProcAddress("gluPerspective");
+				loadOpenglExtensions();
 			} else {
 				assert(false);
 			}
@@ -101,11 +143,48 @@ void createWin32OpenglContext (HWND windowHandle) {
 }
 
 void initOpengl (HWND windowHandle) {
+	globalMemStack = gj_initMemStack(megabytes(10));
+
 	createWin32OpenglContext(windowHandle);
 
 	glEnable(GL_DEPTH_TEST);
 
-	// wglSwapIntervalEXT(0);
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+	/*const char *vertexSource = "varying vec4 vColor;\
+								void main () {\
+									gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\
+									vColor = gl_Color;\
+								}";
+
+	const char *fragmentSource =   "varying vec4 vColor;\
+									void main () {\
+										gl_FragColor = vColor * vec4(0.5f, 1.0f, 0.5f, 1.0f);\
+									}";*/
+
+	gj_Data shaderData = gj_readFile("../code/shader.glsl", &globalMemStack);
+
+	char *vertexSource[2] = { "#define VERTEX_SHADER", shaderData.mem };
+	char *fragmentSource[2] = { "#define FRAGMENT_SHADER", shaderData.mem };
+	glShaderSource(vertexShader, 2, vertexSource, null); // The length can be null if the string is null terminated
+	glShaderSource(fragmentShader, 2, fragmentSource, null);
+
+	char vertexShaderError[1024] = {0};
+	char fragmentShaderError[1024] = {0};
+
+	glCompileShader(vertexShader);
+	glGetShaderInfoLog(vertexShader, 1024, 0, vertexShaderError);
+	glCompileShader(fragmentShader);
+	glGetShaderInfoLog(fragmentShader, 1024, 0, fragmentShaderError);
+
+	OutputDebugString(vertexShaderError);
+	OutputDebugString(fragmentShaderError);
+
+	globalShaderProgram = glCreateProgram();
+	glAttachShader(globalShaderProgram, vertexShader);
+	glAttachShader(globalShaderProgram, fragmentShader);
+	glLinkProgram(globalShaderProgram);
 }
 
 /*
@@ -186,6 +265,8 @@ void drawOpengl (HWND windowHandle) {
 	static float yRotation = 0.0f;
 	static float zRotation = 0.0f;
 
+	glUseProgram(globalShaderProgram);
+
 	glPushMatrix();
 	glTranslatef(0.0f, 0.0f, -2.0f);
 	glRotatef((180.0f / PI) * xRotation, 1.0f, 0.0f, 0.0f);
@@ -194,25 +275,36 @@ void drawOpengl (HWND windowHandle) {
 
 	glBegin(GL_QUADS);
 
-	glColor4f(white); glVertex3f(-0.5f,  0.5f, 0.5f);
-	glColor4f(yellow); glVertex3f(0.5f,  0.5f, 0.5f);
-	glColor4f(red); glVertex3f(0.5f, -0.5f, 0.5f);
-	glColor4f(purple); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glNormal3f(0.0f, 0.0f, 1.0f); glColor4f(white); glVertex3f(-0.5f,  0.5f, 0.5f);
+	glNormal3f(0.0f, 0.0f, 1.0f); glColor4f(yellow); glVertex3f(0.5f,  0.5f, 0.5f);
+	glNormal3f(0.0f, 0.0f, 1.0f); glColor4f(red); glVertex3f(0.5f, -0.5f, 0.5f);
+	glNormal3f(0.0f, 0.0f, 1.0f); glColor4f(purple); glVertex3f(-0.5f, -0.5f, 0.5f);
 
-	glColor4f(green); glVertex3f(0.5f,  0.5f,  -0.5f);
-	glColor4f(terq); glVertex3f(-0.5f,  0.5f,  -0.5f);
-	glColor4f(blue); glVertex3f(-0.5f, -0.5f,  -0.5f);
-	glColor4f(black); glVertex3f(0.5f, -0.5f,  -0.5f);
+	glNormal3f(0.0f, 0.0f, -1.0f); glColor4f(green); glVertex3f(0.5f,  0.5f,  -0.5f);
+	glNormal3f(0.0f, 0.0f, -1.0f); glColor4f(terq); glVertex3f(-0.5f,  0.5f,  -0.5f);
+	glNormal3f(0.0f, 0.0f, -1.0f); glColor4f(blue); glVertex3f(-0.5f, -0.5f,  -0.5f);
+	glNormal3f(0.0f, 0.0f, -1.0f); glColor4f(black); glVertex3f(0.5f, -0.5f,  -0.5f);
 
-	glColor4f(yellow); glVertex3f(0.5f,  0.5f, 0.5f);
-	glColor4f(green); glVertex3f(0.5f,  0.5f,  -0.5f);
-	glColor4f(black); glVertex3f(0.5f, -0.5f,  -0.5f);
-	glColor4f(red); glVertex3f(0.5f, -0.5f, 0.5f);
+	glNormal3f(1.0f, 0.0f, 0.0f); glColor4f(yellow); glVertex3f(0.5f,  0.5f, 0.5f);
+	glNormal3f(1.0f, 0.0f, 0.0f); glColor4f(green); glVertex3f(0.5f,  0.5f,  -0.5f);
+	glNormal3f(1.0f, 0.0f, 0.0f); glColor4f(black); glVertex3f(0.5f, -0.5f,  -0.5f);
+	glNormal3f(1.0f, 0.0f, 0.0f); glColor4f(red); glVertex3f(0.5f, -0.5f, 0.5f);
 
-	glColor4f(terq); glVertex3f(-0.5f,  0.5f,  -0.5f);
-	glColor4f(white); glVertex3f(-0.5f,  0.5f, 0.5f);
-	glColor4f(purple); glVertex3f(-0.5f, -0.5f, 0.5f);
-	glColor4f(blue); glVertex3f(-0.5f, -0.5f,  -0.5f);
+	glNormal3f(-1.0f, 0.0f, 0.0f); glColor4f(terq); glVertex3f(-0.5f,  0.5f,  -0.5f);
+	glNormal3f(-1.0f, 0.0f, 0.0f); glColor4f(white); glVertex3f(-0.5f,  0.5f, 0.5f);
+	glNormal3f(-1.0f, 0.0f, 0.0f); glColor4f(purple); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glNormal3f(-1.0f, 0.0f, 0.0f); glColor4f(blue); glVertex3f(-0.5f, -0.5f,  -0.5f);
+
+	glNormal3f(0.0f, 1.0f, 0.0f); glColor4f(terq); glVertex3f(-0.5f,  0.5f,  -0.5f);
+	glNormal3f(0.0f, 1.0f, 0.0f); glColor4f(green); glVertex3f( 0.5f,  0.5f,  -0.5f);
+	glNormal3f(0.0f, 1.0f, 0.0f); glColor4f(yellow); glVertex3f( 0.5f,  0.5f, 0.5f);
+	glNormal3f(0.0f, 1.0f, 0.0f); glColor4f(white); glVertex3f(-0.5f,  0.5f, 0.5f);
+
+	glNormal3f(0.0f, -1.0f, 0.0f); glColor4f(black); glVertex3f( 0.5f, -0.5f,  -0.5f);
+	glNormal3f(0.0f, -1.0f, 0.0f); glColor4f(blue); glVertex3f(-0.5f, -0.5f,  -0.5f);
+	glNormal3f(0.0f, -1.0f, 0.0f); glColor4f(purple); glVertex3f(-0.5f, -0.5f, 0.5f);
+	glNormal3f(0.0f, -1.0f, 0.0f); glColor4f(red); glVertex3f(0.5f, -0.5f, 0.5f);
+
 
 	/*glColor4f(); glVertex3f();
 	glColor4f(); glVertex3f();
@@ -226,73 +318,6 @@ void drawOpengl (HWND windowHandle) {
 	xRotation -= 0.005f;
 	yRotation += 0.005f;
 	zRotation += 0.005f;
-
-	/*v4 white = {1.0f, 1.0f, 1.0f, 1.0f};
-	v4 yellow = {1.0f, 1.0f, 0.2f, 1.0f};
-	v4 red = {1.0f, 0.2f, 0.2f, 1.0f};
-	v4 blue = {0.2f, 0.2f, 1.0f, 1.0f};
-	v4 purple = {1.0f, 0.2f, 1.0f, 1.0f};
-	v4 green = {0.2f, 1.0f, 0.2f, 1.0f};
-	v4 black = {0.0f, 0.0f, 0.0f, 1.0f};
-	v4 terq = {0.2f, 1.0f, 1.0f, 1.0f};
-	r_vertex Vertices[]=
-	{
-		// front
-		{ {-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, white },
-		{ { 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, yellow },
-		{ { 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, red },
-		
-		{ {-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, white },
-		{ { 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, red },
-		{ {-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, purple },
-
-		
-
-		// back
-		{ { 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, green },
-		{ {-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, terq },
-		{ {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, blue },
-		
-		{ { 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, green },
-		{ {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, blue },
-		{ { 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, black },
-
-		// right
-		{ { 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, yellow },
-		{ { 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, green },
-		{ { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, black },
-		
-		{ { 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, yellow },
-		{ { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, black },
-		{ { 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, red },
-
-		// left
-		{ {-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, terq },
-		{ {-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, white },
-		{ {-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, purple },
-		
-		{ {-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, terq },
-		{ {-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, purple },
-		{ {-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, blue },
-
-		// top
-		{ {-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, terq },
-		{ { 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, green },
-		{ { 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, yellow },
-		
-		{ {-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, terq },
-		{ { 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, yellow },
-		{ {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, white },
-
-		// bottom
-		{ { 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, black },
-		{ {-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, blue },
-		{ {-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, purple },
-		
-		{ { 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, black },
-		{ {-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, purple },
-		{ { 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, red },
-	};*/
 
 	SwapBuffers(hdc);
 }
