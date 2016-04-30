@@ -70,6 +70,12 @@ glUseProgram_proc *glUseProgram;
 typedef void glGetShaderInfoLog_proc (GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
 glGetShaderInfoLog_proc *glGetShaderInfoLog;
 
+typedef GLint glGetUniformLocation_proc (GLuint program, const GLchar *name);
+glGetUniformLocation_proc *glGetUniformLocation;
+
+typedef void glUniformMatrix4fv_proc (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+glUniformMatrix4fv_proc *glUniformMatrix4fv;
+
 gj_Mem_Stack globalMemStack;
 GLuint globalShaderProgram;
 
@@ -84,6 +90,8 @@ void loadOpenglExtensions () {
 	loadExtension(glLinkProgram);
 	loadExtension(glUseProgram);
 	loadExtension(glGetShaderInfoLog);
+	loadExtension(glGetUniformLocation);
+	loadExtension(glUniformMatrix4fv);
 }
 
 void createWin32OpenglContext (HWND windowHandle) {
@@ -209,6 +217,76 @@ Mat4 createPerspectiveMatrix (float fov, float aspect, float near, float far) {
 	return matrix;
 }
 
+Mat4 xRotate (float rads) {
+	Mat4 result = {
+		1,  0,             0,             0,
+		0,  gj_cos(rads), -gj_sin(rads),  0,
+		0,  gj_sin(rads),  gj_cos(rads),  0,
+		0,  0,             0,             1,
+	};
+	return result;
+}
+
+Mat4 yRotate (float rads) {
+	Mat4 result = {
+		 gj_cos(rads),  0,  gj_sin(rads),  0,
+		 0,             1,  0,             0,
+		-gj_sin(rads),  0,  gj_cos(rads),  0,
+		 0,             0,  0,             1,
+	};
+	return result;
+}
+
+Mat4 zRotate (float rads) {
+	Mat4 result = {
+		gj_cos(rads),  -gj_sin(rads),  0,  0,
+		gj_sin(rads),   gj_cos(rads),  0,  0,
+		0,             0,              1,  0,
+		0,             0,              0,  1,
+	};
+	return result;
+}
+
+Mat4 translate (float x, float y, float z) {
+	Mat4 result = {
+		1, 0, 0, x,
+		0, 1, 0, y,
+		0, 0, 1, z,
+		0, 0, 0, 1,
+	};
+	return result;
+}
+
+Mat4 translate (Vec3 pos) {
+	Mat4 result = translate(pos.x, pos.y, pos.z);
+	return result;
+}
+
+Mat4 operator* (Mat4 mat1, Mat4 mat2) {
+	Mat4 result = {
+		mat1.m[0]*mat2.m[0] + mat1.m[1]*mat2.m[4] + mat1.m[2]*mat2.m[8] + mat1.m[3]*mat2.m[12],
+		mat1.m[0]*mat2.m[1] + mat1.m[1]*mat2.m[5] + mat1.m[2]*mat2.m[9] + mat1.m[3]*mat2.m[13],
+		mat1.m[0]*mat2.m[2] + mat1.m[1]*mat2.m[6] + mat1.m[2]*mat2.m[10] + mat1.m[3]*mat2.m[14],
+		mat1.m[0]*mat2.m[3] + mat1.m[1]*mat2.m[7] + mat1.m[2]*mat2.m[11] + mat1.m[3]*mat2.m[15],
+
+		mat1.m[4]*mat2.m[0] + mat1.m[5]*mat2.m[4] + mat1.m[6]*mat2.m[8] + mat1.m[7]*mat2.m[12],
+		mat1.m[4]*mat2.m[1] + mat1.m[5]*mat2.m[5] + mat1.m[6]*mat2.m[9] + mat1.m[7]*mat2.m[13],
+		mat1.m[4]*mat2.m[2] + mat1.m[5]*mat2.m[6] + mat1.m[6]*mat2.m[10] + mat1.m[7]*mat2.m[14],
+		mat1.m[4]*mat2.m[3] + mat1.m[5]*mat2.m[7] + mat1.m[6]*mat2.m[11] + mat1.m[7]*mat2.m[15],
+
+		mat1.m[8]*mat2.m[0] + mat1.m[9]*mat2.m[4] + mat1.m[10]*mat2.m[8] + mat1.m[11]*mat2.m[12],
+		mat1.m[8]*mat2.m[1] + mat1.m[9]*mat2.m[5] + mat1.m[10]*mat2.m[9] + mat1.m[11]*mat2.m[13],
+		mat1.m[8]*mat2.m[2] + mat1.m[9]*mat2.m[6] + mat1.m[10]*mat2.m[10] + mat1.m[11]*mat2.m[14],
+		mat1.m[8]*mat2.m[3] + mat1.m[9]*mat2.m[7] + mat1.m[10]*mat2.m[11] + mat1.m[11]*mat2.m[15],
+
+		mat1.m[12]*mat2.m[0] + mat1.m[13]*mat2.m[4] + mat1.m[14]*mat2.m[8] + mat1.m[15]*mat2.m[12],
+		mat1.m[12]*mat2.m[1] + mat1.m[13]*mat2.m[5] + mat1.m[14]*mat2.m[9] + mat1.m[15]*mat2.m[13],
+		mat1.m[12]*mat2.m[2] + mat1.m[13]*mat2.m[6] + mat1.m[14]*mat2.m[10] + mat1.m[15]*mat2.m[14],
+		mat1.m[12]*mat2.m[3] + mat1.m[13]*mat2.m[7] + mat1.m[14]*mat2.m[11] + mat1.m[15]*mat2.m[15],
+	};
+	return result;
+}
+
 void drawOpengl (HWND windowHandle) {
 	HDC hdc = GetDC(windowHandle);
 	glClearColor(0.4f, 0.6f, 0.9f, 1.0f);
@@ -266,12 +344,17 @@ void drawOpengl (HWND windowHandle) {
 	static float zRotation = 0.0f;
 
 	glUseProgram(globalShaderProgram);
+	Mat4 rotationMatrix = xRotate(xRotation) * yRotate(yRotation) * zRotate(zRotation);
+	Mat4 translationMatrix = translate(0.0f, 0.0f, -2.0f);
+	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uRotationMatrix"), 1, GL_FALSE, rotationMatrix.m);
+	Mat4 transformMatrix = translationMatrix * rotationMatrix;
+	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uTransform"), 1, GL_FALSE, transformMatrix.m);
 
 	glPushMatrix();
-	glTranslatef(0.0f, 0.0f, -2.0f);
-	glRotatef((180.0f / PI) * xRotation, 1.0f, 0.0f, 0.0f);
-	glRotatef((180.0f / PI) * yRotation, 0.0f, 1.0f, 0.0f);
-	glRotatef((180.0f / PI) * zRotation, 0.0f, 0.0f, 1.0f);
+	// glTranslatef(0.0f, 0.0f, -2.0f);
+	// glRotatef((180.0f / PI) * xRotation, 1.0f, 0.0f, 0.0f);
+	// glRotatef((180.0f / PI) * yRotation, 0.0f, 1.0f, 0.0f);
+	// glRotatef((180.0f / PI) * zRotation, 0.0f, 0.0f, 1.0f);
 
 	glBegin(GL_QUADS);
 
@@ -315,9 +398,9 @@ void drawOpengl (HWND windowHandle) {
 
 	glPopMatrix();
 
-	xRotation -= 0.005f;
-	yRotation += 0.005f;
-	zRotation += 0.005f;
+	xRotation -= 0.01f;
+	yRotation += 0.01f;
+	zRotation += 0.01f;
 
 	SwapBuffers(hdc);
 }

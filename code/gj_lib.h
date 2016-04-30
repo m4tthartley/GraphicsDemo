@@ -1,9 +1,33 @@
 
 // gj lib, The Giantjelly library?
 
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned int uint;
+typedef unsigned long long u64;
+typedef char s8;
+typedef short s16;
+typedef long long s64;
+
+#define bool int
+
+#define assert(expression) {if (!(expression)) { *((int*)0) = 0; }}
+#define null 0
+#define PI 3.14159265359f
+
 #define kilobytes(num) (num*1024)
 #define megabytes(num) (kilobytes(num)*1024)
 #define gigabytes(num) (megabytes(num)*1024)
+
+inline float gj_sin (float num) {
+	float result = sinf(num);
+	return result;
+}
+
+inline float gj_cos (float num) {
+	float result = cosf(num);
+	return result;
+}
 
 struct gj_Data {
 	char *mem;

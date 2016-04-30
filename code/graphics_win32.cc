@@ -1,8 +1,4 @@
 
-#define assert(expression) {if (!(expression)) { *((int*)0) = 0; }}
-#define null 0
-#define PI 3.14159265359f
-
 // #include "vulkan.cc"
 
 #include <math.h>
