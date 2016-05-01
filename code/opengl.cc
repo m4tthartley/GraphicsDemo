@@ -135,8 +135,6 @@ static float xRotation = 0.0f;
 static float yRotation = 0.0f;
 static float zRotation = 0.0f;
 
-Model *loadModel (char *file);
-
 void loadOpenglExtensions () {
 	#define loadExtension(name) name = null; name = (name##_proc*)wglGetProcAddress(#name); assert(name);
 
@@ -243,6 +241,193 @@ GLuint createShader (char *file) {
 	return program;
 }
 
+char *readObjToken (char **str) {
+	while (**str == ' ' || **str == '\t') {
+		++*str;
+	}
+
+	char *start = *str;
+
+	while (**str != ' ' && **str != '\t' && **str != '\n' && **str != 0) {
+		++*str;
+	}
+
+	**str = 0;
+	++*str;
+
+	return start;
+}
+
+Model *loadModel (char *file, char *objectName) {
+	
+
+	// file_data modelFile = FileRead(file);
+	gj_Data modelData = gj_readFile(file, &globalMemStack);
+	char *objStr = (char*)modelData.mem;
+
+	int unusedVertexCount = 0;
+	int unusedNormalCount = 0;
+
+	{
+		// Preprocess counts
+		while (objStr - modelData.mem < modelData.size) {
+			char *token = readObjToken(&objStr);
+
+			if (!strcmp(token, "v")) {
+				++unusedVertexCount;
+				int x = 0;
+			} else if (!strcmp(token, "vn")) {
+				++unusedNormalCount;
+				int x = 0;
+			} else if (!strcmp(token, "o")) {
+				token = readObjToken(&objStr);
+				if (!strcmp(token, objectName)) {
+					break;
+				}
+				int x = 0;
+			} else if (!strcmp(token, "f")) {
+				int x = 0;
+			}
+		}
+	}
+
+	// objStr = (char*)modelData.mem;
+
+	/*s32 modelMemSize = sizeof(v3)*vertMax + sizeof(v3)*vertMax + sizeof(v3)*normMax + sizeof(model_face)*faceMax + sizeof(iv3)*faceMax;
+	char *modelMem = MemPoolAlloc(assetMemPool, modelMemSize);
+	verts = (v3*)modelMem;
+	perVertNormals = verts + vertMax;
+	norms = perVertNormals + vertMax;
+	faces = (model_face*)(norms + normMax);
+	indices = (iv3*)(faces + faceMax);
+	s32 vertCount = 0;
+	s32 normCount = 0;
+	s32 faceCount = 0;*/
+
+	Model *model = (Model*)gj_pushMemStack(&globalMemStack, sizeof(Model));
+	Model *tempModel = (Model*)gj_pushMemStack(&globalMemStack, sizeof(Model));
+	int vertexCount = 0;
+	int normalCount = 0;
+	// int indexCount = 0;
+
+	while (objStr - modelData.mem < modelData.size) {
+		char *token = readObjToken(&objStr);
+
+		if (!strcmp(token, "v")) {
+			Vec3 *vert = &tempModel->vertices[vertexCount].vertex;
+			token = readObjToken(&objStr);
+			vert->x = strtof(token, NULL);
+			token = readObjToken(&objStr);
+			vert->y = strtof(token, NULL);
+			token = readObjToken(&objStr);
+			vert->z = strtof(token, NULL);
+			++vertexCount;
+
+			if (vertexCount >= arraySize(tempModel->vertices)) {
+				assert(false);
+			}
+		} else if (!strcmp(token, "vn")) {
+			Vec3 *norm = &tempModel->vertices[normalCount].normal;
+			token = readObjToken(&objStr);
+			norm->x = strtof(token, NULL);
+			token = readObjToken(&objStr);
+			norm->y = strtof(token, NULL);
+			token = readObjToken(&objStr);
+			norm->z = strtof(token, NULL);
+			++normalCount;
+
+			if (normalCount >= arraySize(tempModel->vertices)) {
+				assert(false);
+			}
+		} else if (!strcmp(token, "f")) {
+			// token = readObjToken(&objStr);
+			/*faces[faceCount].points[0].vertexIndex = atoi(token) - 1;
+			token += 3;
+			faces[faceCount].points[0].normalIndex = atoi(token) - 1;
+
+			token = readObjToken(&objStr);
+			faces[faceCount].points[1].vertexIndex = atoi(token) - 1;
+			token += 3;
+			faces[faceCount].points[1].normalIndex = atoi(token) - 1;
+
+			token = readObjToken(&objStr);
+			faces[faceCount].points[2].vertexIndex = atoi(token) - 1;
+			token += 3;
+			faces[faceCount].points[2].normalIndex = atoi(token) - 1;*/
+
+			token = readObjToken(&objStr);
+			int index1Vertex = atoi(token) - 1;
+			while (*token != '/') {
+				++token;
+			}
+			token += 2;
+			int index1Normal = atoi(token) - 1;
+
+			token = readObjToken(&objStr);
+			int index2Vertex = atoi(token) - 1;
+			while (*token != '/') {
+				++token;
+			}
+			token += 2;
+			int index2Normal = atoi(token) - 1;
+
+			token = readObjToken(&objStr);
+			int index3Vertex = atoi(token) - 1;
+			while (*token != '/') {
+				++token;
+			}
+			token += 2;
+			int index3Normal = atoi(token) - 1;
+
+			model->indices[model->indexCount] = model->vertexCount;
+			model->indices[model->indexCount+1] = model->vertexCount+1;
+			model->indices[model->indexCount+2] = model->vertexCount+2;
+
+			model->vertices[model->vertexCount].vertex = tempModel->vertices[index1Vertex - unusedVertexCount].vertex;
+			model->vertices[model->vertexCount+1].vertex = tempModel->vertices[index2Vertex - unusedVertexCount].vertex;
+			model->vertices[model->vertexCount+2].vertex = tempModel->vertices[index3Vertex - unusedVertexCount].vertex;
+
+			model->vertices[model->vertexCount].normal = tempModel->vertices[index1Normal - unusedNormalCount].normal;
+			model->vertices[model->vertexCount+1].normal = tempModel->vertices[index2Normal - unusedNormalCount].normal;
+			model->vertices[model->vertexCount+2].normal = tempModel->vertices[index3Normal - unusedNormalCount].normal;
+
+			/*model->vertices[model->vertexCount].vertex = tempModel->vertices[index1Vertex].vertex;
+			model->vertices[model->vertexCount].vertex = tempModel->vertices[index2Vertex].vertex;
+			model->vertices[model->vertexCount].vertex = tempModel->vertices[index3Vertex].vertex;*/
+
+			model->indexCount += 3;
+			model->vertexCount += 3;
+
+			if (model->indexCount >= arraySize(model->indices) - 2) {
+				assert(false);
+			}
+			if (model->vertexCount >= arraySize(model->vertices) - 2) {
+				assert(false);
+			}
+
+			/*indices[faceCount].x = faces[faceCount].points[0].vertexIndex;
+			indices[faceCount].y = faces[faceCount].points[1].vertexIndex;
+			indices[faceCount].z = faces[faceCount].points[2].vertexIndex;*/
+
+			// ++faceCount;
+		}
+
+		
+	}
+
+	// model->vertexCount = vertexCount;
+
+	int x = 0;
+
+	/*fiz (faceMax) {
+		perVertNormals[faces[i].points[0].vertexIndex] = norms[faces[i].points[0].normalIndex];
+		perVertNormals[faces[i].points[1].vertexIndex] = norms[faces[i].points[1].normalIndex];
+		perVertNormals[faces[i].points[2].vertexIndex] = norms[faces[i].points[2].normalIndex];
+	}*/
+
+	return model;
+}
+
 void initOpengl (HWND windowHandle) {
 	globalMemStack = gj_initMemStack(megabytes(10));
 
@@ -261,10 +446,10 @@ void initOpengl (HWND windowHandle) {
 		OutputDebugString(str);
 	}*/
 
-	globalModel = loadModel("cube.obj");
-	globalShipModel = loadModel("1v5.obj");
-	globalCylinderModel = loadModel("cylinder.obj");
-	globalTestModel = loadModel("test.obj");
+	globalModel = loadModel("cube.obj", "Cube");
+	globalShipModel = loadModel("1v5.obj", "Ship_Cube.001");
+	globalCylinderModel = loadModel("cylinder.obj", "Cylinder_Cylinder.001");
+	globalTestModel = loadModel("test.obj", "Sphere");
 }
 
 /*
@@ -357,179 +542,6 @@ Mat4 operator* (Mat4 mat1, Mat4 mat2) {
 		mat1.m[12]*mat2.m[3] + mat1.m[13]*mat2.m[7] + mat1.m[14]*mat2.m[11] + mat1.m[15]*mat2.m[15],
 	};
 	return result;
-}
-
-char *readObjToken (char **str) {
-	while (**str == ' ' || **str == '\t') {
-		++*str;
-	}
-
-	char *start = *str;
-
-	while (**str != ' ' && **str != '\t' && **str != '\n' && **str != 0) {
-		++*str;
-	}
-
-	**str = 0;
-	++*str;
-
-	return start;
-}
-
-Model *loadModel (char *file) {
-	
-
-	// file_data modelFile = FileRead(file);
-	gj_Data modelData = gj_readFile(file, &globalMemStack);
-	char *objStr = (char*)modelData.mem;
-
-	/*while (objStr - modelData.mem < modelData.size) {
-		char *token = readObjToken(&objStr);
-
-		if (!strcmp(token, "v")) {
-			++vertMax;
-		} else if (!strcmp(token, "vn")) {;
-			++normMax;
-		} else if (!strcmp(token, "f")) {
-			++faceMax;
-		}
-	}*/
-
-	objStr = (char*)modelData.mem;
-
-	/*s32 modelMemSize = sizeof(v3)*vertMax + sizeof(v3)*vertMax + sizeof(v3)*normMax + sizeof(model_face)*faceMax + sizeof(iv3)*faceMax;
-	char *modelMem = MemPoolAlloc(assetMemPool, modelMemSize);
-	verts = (v3*)modelMem;
-	perVertNormals = verts + vertMax;
-	norms = perVertNormals + vertMax;
-	faces = (model_face*)(norms + normMax);
-	indices = (iv3*)(faces + faceMax);
-	s32 vertCount = 0;
-	s32 normCount = 0;
-	s32 faceCount = 0;*/
-
-	Model *model = (Model*)gj_pushMemStack(&globalMemStack, sizeof(Model));
-	Model *tempModel = (Model*)gj_pushMemStack(&globalMemStack, sizeof(Model));
-	int vertexCount = 0;
-	int normalCount = 0;
-	// int indexCount = 0;
-
-	while (objStr - modelData.mem < modelData.size) {
-		char *token = readObjToken(&objStr);
-
-		if (!strcmp(token, "v")) {
-			Vec3 *vert = &tempModel->vertices[vertexCount].vertex;
-			token = readObjToken(&objStr);
-			vert->x = strtof(token, NULL);
-			token = readObjToken(&objStr);
-			vert->y = strtof(token, NULL);
-			token = readObjToken(&objStr);
-			vert->z = strtof(token, NULL);
-			++vertexCount;
-
-			if (vertexCount >= arraySize(tempModel->vertices)) {
-				assert(false);
-			}
-		} else if (!strcmp(token, "vn")) {
-			Vec3 *norm = &tempModel->vertices[normalCount].normal;
-			token = readObjToken(&objStr);
-			norm->x = strtof(token, NULL);
-			token = readObjToken(&objStr);
-			norm->y = strtof(token, NULL);
-			token = readObjToken(&objStr);
-			norm->z = strtof(token, NULL);
-			++normalCount;
-
-			if (normalCount >= arraySize(tempModel->vertices)) {
-				assert(false);
-			}
-		} else if (!strcmp(token, "f")) {
-			// token = readObjToken(&objStr);
-			/*faces[faceCount].points[0].vertexIndex = atoi(token) - 1;
-			token += 3;
-			faces[faceCount].points[0].normalIndex = atoi(token) - 1;
-
-			token = readObjToken(&objStr);
-			faces[faceCount].points[1].vertexIndex = atoi(token) - 1;
-			token += 3;
-			faces[faceCount].points[1].normalIndex = atoi(token) - 1;
-
-			token = readObjToken(&objStr);
-			faces[faceCount].points[2].vertexIndex = atoi(token) - 1;
-			token += 3;
-			faces[faceCount].points[2].normalIndex = atoi(token) - 1;*/
-
-			token = readObjToken(&objStr);
-			int index1Vertex = atoi(token) - 1;
-			while (*token != '/') {
-				++token;
-			}
-			token += 2;
-			int index1Normal = atoi(token) - 1;
-
-			token = readObjToken(&objStr);
-			int index2Vertex = atoi(token) - 1;
-			while (*token != '/') {
-				++token;
-			}
-			token += 2;
-			int index2Normal = atoi(token) - 1;
-
-			token = readObjToken(&objStr);
-			int index3Vertex = atoi(token) - 1;
-			while (*token != '/') {
-				++token;
-			}
-			token += 2;
-			int index3Normal = atoi(token) - 1;
-
-			model->indices[model->indexCount] = model->vertexCount;
-			model->indices[model->indexCount+1] = model->vertexCount+1;
-			model->indices[model->indexCount+2] = model->vertexCount+2;
-
-			model->vertices[model->vertexCount].vertex = tempModel->vertices[index1Vertex].vertex;
-			model->vertices[model->vertexCount+1].vertex = tempModel->vertices[index2Vertex].vertex;
-			model->vertices[model->vertexCount+2].vertex = tempModel->vertices[index3Vertex].vertex;
-
-			model->vertices[model->vertexCount].normal = tempModel->vertices[index1Normal].normal;
-			model->vertices[model->vertexCount+1].normal = tempModel->vertices[index2Normal].normal;
-			model->vertices[model->vertexCount+2].normal = tempModel->vertices[index3Normal].normal;
-
-			/*model->vertices[model->vertexCount].vertex = tempModel->vertices[index1Vertex].vertex;
-			model->vertices[model->vertexCount].vertex = tempModel->vertices[index2Vertex].vertex;
-			model->vertices[model->vertexCount].vertex = tempModel->vertices[index3Vertex].vertex;*/
-
-			model->indexCount += 3;
-			model->vertexCount += 3;
-
-			if (model->indexCount >= arraySize(model->indices) - 2) {
-				assert(false);
-			}
-			if (model->vertexCount >= arraySize(model->vertices) - 2) {
-				assert(false);
-			}
-
-			/*indices[faceCount].x = faces[faceCount].points[0].vertexIndex;
-			indices[faceCount].y = faces[faceCount].points[1].vertexIndex;
-			indices[faceCount].z = faces[faceCount].points[2].vertexIndex;*/
-
-			// ++faceCount;
-		}
-
-		
-	}
-
-	// model->vertexCount = vertexCount;
-
-	int x = 0;
-
-	/*fiz (faceMax) {
-		perVertNormals[faces[i].points[0].vertexIndex] = norms[faces[i].points[0].normalIndex];
-		perVertNormals[faces[i].points[1].vertexIndex] = norms[faces[i].points[1].normalIndex];
-		perVertNormals[faces[i].points[2].vertexIndex] = norms[faces[i].points[2].normalIndex];
-	}*/
-
-	return model;
 }
 
 void drawModel (Model *model, float scale) {
