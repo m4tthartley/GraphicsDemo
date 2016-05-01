@@ -19,6 +19,11 @@ typedef long long s64;
 #define megabytes(num) (kilobytes(num)*1024)
 #define gigabytes(num) (megabytes(num)*1024)
 
+#define arraySize(array) (sizeof(array)/sizeof(array[0]))
+#define fiz(count) for (int i = 0; i < count; ++i)
+#define fjz(count) for (int j = 0; j < count; ++j)
+#define fkz(count) for (int k = 0; k < count; ++k)
+
 inline float gj_sin (float num) {
 	float result = sinf(num);
 	return result;
@@ -55,8 +60,9 @@ gj_Mem_Stack gj_initMemStack (size_t size) {
 
 char *gj_pushMemStack (gj_Mem_Stack *memStack, size_t size) {
 	if (memStack->used + size <= memStack->size) {
+		char *result = memStack->mem + memStack->used;
 		memStack->used += size;
-		return memStack->mem + memStack->used;
+		return result;
 	} else {
 		// printf("Ran out of memory %i/%i \n", memStack->used + size, memStack->size);
 		assert(false);

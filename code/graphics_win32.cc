@@ -2,6 +2,7 @@
 // #include "vulkan.cc"
 
 #include <math.h>
+#include <stdio.h>
 #include <windows.h>
 #ifdef RENDER_OPENGL
 #include <GL/gl.h> // windows.h must be included before gl.h
@@ -74,11 +75,33 @@ int CALLBACK WinMain (HINSTANCE hInstance,
 
 			while (running)
 			{
+				globalScroll = 0;
+
 				MSG msg;
 				while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
 				{
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
+					switch (msg.message) {
+						case WM_MOUSEWHEEL: {
+							short scrollDelta = GET_WHEEL_DELTA_WPARAM(msg.wParam);
+							globalScroll = scrollDelta / WHEEL_DELTA;
+						} break;
+						case WM_SYSKEYUP:
+						case WM_KEYUP: {
+							switch (msg.wParam) {
+								case '1': {
+									if (globalNormalVisualization) {
+										globalNormalVisualization = false;
+									} else {
+										globalNormalVisualization = true;
+									}
+								} break;
+							}
+						} break;
+						default: {
+							TranslateMessage(&msg);
+							DispatchMessage(&msg);
+						} break;
+					}
 				}
 
 #ifdef RENDER_DIRECTX

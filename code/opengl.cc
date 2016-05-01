@@ -1,8 +1,18 @@
 
 #pragma pack(push, 1)
-struct Vec2 {
-	float x;
-	float y;
+union Vec2 {
+	struct {
+		float x;
+		float y;
+	};
+	struct {
+		float u;
+		float v;
+	};
+	struct {
+		float s;
+		float t;
+	};
 };
 
 union Vec3 {
@@ -13,6 +23,16 @@ union Vec3 {
 	};
 	Vec2 xy;
 };
+
+Vec3 operator+ (Vec3 vec1, Vec3 vec2) {
+	Vec3 result = {vec1.x+vec2.x, vec1.y+vec2.y, vec1.z+vec2.z};
+	return result;
+}
+
+Vec3 operator* (Vec3 vec, float num) {
+	Vec3 result = {vec.x*num, vec.y*num, vec.z*num};
+	return result;
+}
 
 union Vec4 {
 	struct {
@@ -30,6 +50,25 @@ union Mat4 {
 };
 #pragma pack(pop)
 
+struct model_face {
+	struct {
+		int vertexIndex;
+		int normalIndex;
+	} points[3];
+};
+
+struct Model_Vertex {
+	Vec3 vertex;
+	Vec3 normal;
+};
+
+struct Model {
+	Model_Vertex vertices[4096*4];
+	int indices[4096*4];
+	int vertexCount;
+	int indexCount;
+};
+
 #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
 #define WGL_CONTEXT_FLAGS_ARB 0x2094
@@ -46,38 +85,57 @@ typedef char GLchar;
 typedef HGLRC WINAPI wglCreateContextAttribsARB_proc (HDC hdc, HGLRC sharedContext, const int *attribList);
 wglCreateContextAttribsARB_proc *wglCreateContextAttribsARB;
 
-typedef GLuint glCreateShader_proc (GLenum shaderType);
+typedef GLuint __stdcall glCreateShader_proc (GLenum shaderType);
 glCreateShader_proc *glCreateShader;
 
-typedef void glShaderSource_proc (GLuint shader, GLsizei count, const GLchar *const *string, const GLint *length);
+typedef void __stdcall glShaderSource_proc (GLuint shader, GLsizei count, const GLchar *const *string, const GLint *length);
 glShaderSource_proc *glShaderSource;
 
-typedef void glCompileShader_proc (GLuint shader);
+typedef void __stdcall glCompileShader_proc (GLuint shader);
 glCompileShader_proc *glCompileShader;
 
-typedef GLuint glCreateProgram_proc ();
+typedef GLuint __stdcall glCreateProgram_proc ();
 glCreateProgram_proc *glCreateProgram;
 
-typedef void glAttachShader_proc (GLuint program, GLuint shader);
+typedef void __stdcall glAttachShader_proc (GLuint program, GLuint shader);
 glAttachShader_proc *glAttachShader;
 
-typedef void glLinkProgram_proc (GLuint program);
+typedef void __stdcall glLinkProgram_proc (GLuint program);
 glLinkProgram_proc *glLinkProgram;
 
-typedef void glUseProgram_proc (GLuint program);
+typedef void __stdcall glUseProgram_proc (GLuint program);
 glUseProgram_proc *glUseProgram;
 
-typedef void glGetShaderInfoLog_proc (GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+typedef void __stdcall glGetShaderInfoLog_proc (GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
 glGetShaderInfoLog_proc *glGetShaderInfoLog;
 
-typedef GLint glGetUniformLocation_proc (GLuint program, const GLchar *name);
+typedef GLint __stdcall glGetUniformLocation_proc (GLuint program, const GLchar *name);
 glGetUniformLocation_proc *glGetUniformLocation;
 
-typedef void glUniformMatrix4fv_proc (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+typedef void __stdcall glUniformMatrix4fv_proc (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 glUniformMatrix4fv_proc *glUniformMatrix4fv;
 
 gj_Mem_Stack globalMemStack;
+
 GLuint globalShaderProgram;
+GLuint globalWireShader;
+
+Model *globalModel;
+Model *globalShipModel;
+Model *globalCylinderModel;
+Model *globalTestModel;
+
+Vec2 globalMousePos;
+float globalScroll;
+
+float globalZoom = -3.0f;
+bool globalNormalVisualization = false;
+
+static float xRotation = 0.0f;
+static float yRotation = 0.0f;
+static float zRotation = 0.0f;
+
+Model *loadModel (char *file);
 
 void loadOpenglExtensions () {
 	#define loadExtension(name) name = null; name = (name##_proc*)wglGetProcAddress(#name); assert(name);
@@ -150,28 +208,11 @@ void createWin32OpenglContext (HWND windowHandle) {
 	}
 }
 
-void initOpengl (HWND windowHandle) {
-	globalMemStack = gj_initMemStack(megabytes(10));
-
-	createWin32OpenglContext(windowHandle);
-
-	glEnable(GL_DEPTH_TEST);
-
+GLuint createShader (char *file) {
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-	/*const char *vertexSource = "varying vec4 vColor;\
-								void main () {\
-									gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\
-									vColor = gl_Color;\
-								}";
-
-	const char *fragmentSource =   "varying vec4 vColor;\
-									void main () {\
-										gl_FragColor = vColor * vec4(0.5f, 1.0f, 0.5f, 1.0f);\
-									}";*/
-
-	gj_Data shaderData = gj_readFile("../code/shader.glsl", &globalMemStack);
+	gj_Data shaderData = gj_readFile(file, &globalMemStack);
 
 	char *vertexSource[2] = { "#define VERTEX_SHADER", shaderData.mem };
 	char *fragmentSource[2] = { "#define FRAGMENT_SHADER", shaderData.mem };
@@ -186,13 +227,44 @@ void initOpengl (HWND windowHandle) {
 	glCompileShader(fragmentShader);
 	glGetShaderInfoLog(fragmentShader, 1024, 0, fragmentShaderError);
 
+	OutputDebugString(file);
+	OutputDebugString(" \nvertex shader output: \n");
 	OutputDebugString(vertexShaderError);
+	OutputDebugString(" fragment shader output: \n");
 	OutputDebugString(fragmentShaderError);
 
-	globalShaderProgram = glCreateProgram();
-	glAttachShader(globalShaderProgram, vertexShader);
-	glAttachShader(globalShaderProgram, fragmentShader);
-	glLinkProgram(globalShaderProgram);
+	OutputDebugString(shaderData.mem);
+
+	GLuint program = glCreateProgram();
+	glAttachShader(program, vertexShader);
+	glAttachShader(program, fragmentShader);
+	glLinkProgram(program);
+
+	return program;
+}
+
+void initOpengl (HWND windowHandle) {
+	globalMemStack = gj_initMemStack(megabytes(10));
+
+	createWin32OpenglContext(windowHandle);
+
+	glEnable(GL_DEPTH_TEST);
+
+	globalShaderProgram = createShader("../code/shader.glsl");
+	globalWireShader = createShader("../code/wire.glsl");
+
+	/*fiz (globalModel->indexCount) {
+		Vec3 vertex = globalModel->vertices[globalModel->indices[i]].vertex;
+		Vec3 normal = globalModel->vertices[globalModel->indices[i]].normal;
+		char str[256];
+		sprintf(str, "v %f %f %f, n %f %f %f \n", vertex.x, vertex.y, vertex.z, normal.x, normal.y, normal.z);
+		OutputDebugString(str);
+	}*/
+
+	globalModel = loadModel("cube.obj");
+	globalShipModel = loadModel("1v5.obj");
+	globalCylinderModel = loadModel("cylinder.obj");
+	globalTestModel = loadModel("test.obj");
 }
 
 /*
@@ -287,6 +359,216 @@ Mat4 operator* (Mat4 mat1, Mat4 mat2) {
 	return result;
 }
 
+char *readObjToken (char **str) {
+	while (**str == ' ' || **str == '\t') {
+		++*str;
+	}
+
+	char *start = *str;
+
+	while (**str != ' ' && **str != '\t' && **str != '\n' && **str != 0) {
+		++*str;
+	}
+
+	**str = 0;
+	++*str;
+
+	return start;
+}
+
+Model *loadModel (char *file) {
+	
+
+	// file_data modelFile = FileRead(file);
+	gj_Data modelData = gj_readFile(file, &globalMemStack);
+	char *objStr = (char*)modelData.mem;
+
+	/*while (objStr - modelData.mem < modelData.size) {
+		char *token = readObjToken(&objStr);
+
+		if (!strcmp(token, "v")) {
+			++vertMax;
+		} else if (!strcmp(token, "vn")) {;
+			++normMax;
+		} else if (!strcmp(token, "f")) {
+			++faceMax;
+		}
+	}*/
+
+	objStr = (char*)modelData.mem;
+
+	/*s32 modelMemSize = sizeof(v3)*vertMax + sizeof(v3)*vertMax + sizeof(v3)*normMax + sizeof(model_face)*faceMax + sizeof(iv3)*faceMax;
+	char *modelMem = MemPoolAlloc(assetMemPool, modelMemSize);
+	verts = (v3*)modelMem;
+	perVertNormals = verts + vertMax;
+	norms = perVertNormals + vertMax;
+	faces = (model_face*)(norms + normMax);
+	indices = (iv3*)(faces + faceMax);
+	s32 vertCount = 0;
+	s32 normCount = 0;
+	s32 faceCount = 0;*/
+
+	Model *model = (Model*)gj_pushMemStack(&globalMemStack, sizeof(Model));
+	Model *tempModel = (Model*)gj_pushMemStack(&globalMemStack, sizeof(Model));
+	int vertexCount = 0;
+	int normalCount = 0;
+	// int indexCount = 0;
+
+	while (objStr - modelData.mem < modelData.size) {
+		char *token = readObjToken(&objStr);
+
+		if (!strcmp(token, "v")) {
+			Vec3 *vert = &tempModel->vertices[vertexCount].vertex;
+			token = readObjToken(&objStr);
+			vert->x = strtof(token, NULL);
+			token = readObjToken(&objStr);
+			vert->y = strtof(token, NULL);
+			token = readObjToken(&objStr);
+			vert->z = strtof(token, NULL);
+			++vertexCount;
+
+			if (vertexCount >= arraySize(tempModel->vertices)) {
+				assert(false);
+			}
+		} else if (!strcmp(token, "vn")) {
+			Vec3 *norm = &tempModel->vertices[normalCount].normal;
+			token = readObjToken(&objStr);
+			norm->x = strtof(token, NULL);
+			token = readObjToken(&objStr);
+			norm->y = strtof(token, NULL);
+			token = readObjToken(&objStr);
+			norm->z = strtof(token, NULL);
+			++normalCount;
+
+			if (normalCount >= arraySize(tempModel->vertices)) {
+				assert(false);
+			}
+		} else if (!strcmp(token, "f")) {
+			// token = readObjToken(&objStr);
+			/*faces[faceCount].points[0].vertexIndex = atoi(token) - 1;
+			token += 3;
+			faces[faceCount].points[0].normalIndex = atoi(token) - 1;
+
+			token = readObjToken(&objStr);
+			faces[faceCount].points[1].vertexIndex = atoi(token) - 1;
+			token += 3;
+			faces[faceCount].points[1].normalIndex = atoi(token) - 1;
+
+			token = readObjToken(&objStr);
+			faces[faceCount].points[2].vertexIndex = atoi(token) - 1;
+			token += 3;
+			faces[faceCount].points[2].normalIndex = atoi(token) - 1;*/
+
+			token = readObjToken(&objStr);
+			int index1Vertex = atoi(token) - 1;
+			while (*token != '/') {
+				++token;
+			}
+			token += 2;
+			int index1Normal = atoi(token) - 1;
+
+			token = readObjToken(&objStr);
+			int index2Vertex = atoi(token) - 1;
+			while (*token != '/') {
+				++token;
+			}
+			token += 2;
+			int index2Normal = atoi(token) - 1;
+
+			token = readObjToken(&objStr);
+			int index3Vertex = atoi(token) - 1;
+			while (*token != '/') {
+				++token;
+			}
+			token += 2;
+			int index3Normal = atoi(token) - 1;
+
+			model->indices[model->indexCount] = model->vertexCount;
+			model->indices[model->indexCount+1] = model->vertexCount+1;
+			model->indices[model->indexCount+2] = model->vertexCount+2;
+
+			model->vertices[model->vertexCount].vertex = tempModel->vertices[index1Vertex].vertex;
+			model->vertices[model->vertexCount+1].vertex = tempModel->vertices[index2Vertex].vertex;
+			model->vertices[model->vertexCount+2].vertex = tempModel->vertices[index3Vertex].vertex;
+
+			model->vertices[model->vertexCount].normal = tempModel->vertices[index1Normal].normal;
+			model->vertices[model->vertexCount+1].normal = tempModel->vertices[index2Normal].normal;
+			model->vertices[model->vertexCount+2].normal = tempModel->vertices[index3Normal].normal;
+
+			/*model->vertices[model->vertexCount].vertex = tempModel->vertices[index1Vertex].vertex;
+			model->vertices[model->vertexCount].vertex = tempModel->vertices[index2Vertex].vertex;
+			model->vertices[model->vertexCount].vertex = tempModel->vertices[index3Vertex].vertex;*/
+
+			model->indexCount += 3;
+			model->vertexCount += 3;
+
+			if (model->indexCount >= arraySize(model->indices) - 2) {
+				assert(false);
+			}
+			if (model->vertexCount >= arraySize(model->vertices) - 2) {
+				assert(false);
+			}
+
+			/*indices[faceCount].x = faces[faceCount].points[0].vertexIndex;
+			indices[faceCount].y = faces[faceCount].points[1].vertexIndex;
+			indices[faceCount].z = faces[faceCount].points[2].vertexIndex;*/
+
+			// ++faceCount;
+		}
+
+		
+	}
+
+	// model->vertexCount = vertexCount;
+
+	int x = 0;
+
+	/*fiz (faceMax) {
+		perVertNormals[faces[i].points[0].vertexIndex] = norms[faces[i].points[0].normalIndex];
+		perVertNormals[faces[i].points[1].vertexIndex] = norms[faces[i].points[1].normalIndex];
+		perVertNormals[faces[i].points[2].vertexIndex] = norms[faces[i].points[2].normalIndex];
+	}*/
+
+	return model;
+}
+
+void drawModel (Model *model, float scale) {
+	glUseProgram(globalShaderProgram);
+
+	Mat4 rotationMatrix = xRotate(xRotation) * yRotate(yRotation) * zRotate(zRotation);
+	Mat4 translationMatrix = translate(0.0f, 0.0f, globalZoom);
+	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uRotationMatrix"), 1, GL_FALSE, rotationMatrix.m);
+	Mat4 transformMatrix = translationMatrix * rotationMatrix;
+	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uTransform"), 1, GL_FALSE, transformMatrix.m);
+
+	glBegin(GL_TRIANGLES);
+
+	fiz (model->indexCount) {
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		Vec3 vertex = model->vertices[model->indices[i]].vertex;
+		Vec3 normal = model->vertices[model->indices[i]].normal;
+		glNormal3f(normal.x, normal.y, normal.z);
+		glVertex3f(vertex.x * scale, vertex.y * scale, vertex.z * scale);
+	}
+
+	glEnd();
+
+	if (globalNormalVisualization) {
+		glUseProgram(globalWireShader);
+		glUniformMatrix4fv(glGetUniformLocation(globalWireShader, "uTransform"), 1, GL_FALSE, transformMatrix.m);
+
+		glBegin(GL_LINES);
+		fiz (model->vertexCount) {
+			glColor4f(1.0f, 0.0f, 0.5f, 1.0f);
+			Vec3 vertex = model->vertices[i].vertex * scale;
+			glVertex3f(vertex.x, vertex.y, vertex.z);
+			Vec3 normal = vertex + (model->vertices[i].normal * 0.1f);
+			glVertex3f(normal.x, normal.y, normal.z);
+		}
+		glEnd();
+	}
+}
+
 void drawOpengl (HWND windowHandle) {
 	HDC hdc = GetDC(windowHandle);
 	glClearColor(0.4f, 0.6f, 0.9f, 1.0f);
@@ -320,15 +602,21 @@ void drawOpengl (HWND windowHandle) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	/*glBegin(GL_QUADS);
-	{
-		glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-		glVertex3f(-0.5f, 0.5f, -2);
-		glVertex3f(0.5f, 0.5f, -2);
-		glVertex3f(0.5f, -0.5f, -2);
-		glVertex3f(-0.5f, -0.5f, -2);
+	globalZoom -= globalScroll * (globalZoom * 0.1f);
+
+	POINT mousePos;
+	GetCursorPos(&mousePos);
+	SHORT mouseLeftDown = GetAsyncKeyState(VK_LBUTTON);
+	Vec2 mouseMovement = {mousePos.x - globalMousePos.x, mousePos.y - globalMousePos.y};
+	globalMousePos = {mousePos.x, mousePos.y};
+
+	if (mouseLeftDown) {
+		yRotation += mouseMovement.x * 0.01f;
+		xRotation += mouseMovement.y * 0.01f;
 	}
-	glEnd();*/
+	// xRotation -= 0.01f;
+	// yRotation += 0.01f;
+	// zRotation += 0.01f;
 
 	#define white 1.0f, 1.0f, 1.0f, 1.0f
 	#define yellow 1.0f, 1.0f, 0.2f, 1.0f
@@ -339,17 +627,7 @@ void drawOpengl (HWND windowHandle) {
 	#define black 0.0f, 0.0f, 0.0f, 1.0f
 	#define terq 0.2f, 1.0f, 1.0f, 1.0f
 
-	static float xRotation = 0.0f;
-	static float yRotation = 0.0f;
-	static float zRotation = 0.0f;
-
-	glUseProgram(globalShaderProgram);
-	Mat4 rotationMatrix = xRotate(xRotation) * yRotate(yRotation) * zRotate(zRotation);
-	Mat4 translationMatrix = translate(0.0f, 0.0f, -2.0f);
-	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uRotationMatrix"), 1, GL_FALSE, rotationMatrix.m);
-	Mat4 transformMatrix = translationMatrix * rotationMatrix;
-	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uTransform"), 1, GL_FALSE, transformMatrix.m);
-
+#if 0
 	glPushMatrix();
 	// glTranslatef(0.0f, 0.0f, -2.0f);
 	// glRotatef((180.0f / PI) * xRotation, 1.0f, 0.0f, 0.0f);
@@ -397,10 +675,12 @@ void drawOpengl (HWND windowHandle) {
 	glEnd();
 
 	glPopMatrix();
+#endif
 
-	xRotation -= 0.01f;
-	yRotation += 0.01f;
-	zRotation += 0.01f;
+	// drawModel(globalModel, 0.5f);
+	drawModel(globalShipModel, 0.15f);
+	// drawModel(globalCylinderModel, 0.15f);
+	// drawModel(globalTestModel, 0.5f);
 
 	SwapBuffers(hdc);
 }
