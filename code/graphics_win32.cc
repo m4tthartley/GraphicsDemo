@@ -88,11 +88,23 @@ int CALLBACK WinMain (HINSTANCE hInstance,
 						case WM_SYSKEYUP:
 						case WM_KEYUP: {
 							switch (msg.wParam) {
-								case '1': {
+								case 'N': {
 									if (globalNormalVisualization) {
 										globalNormalVisualization = false;
 									} else {
 										globalNormalVisualization = true;
+									}
+								} break;
+								case VK_LEFT: {
+									--selectedModel;
+									if (selectedModel < 0) {
+										selectedModel = 0;
+									}
+								} break;
+								case VK_RIGHT: {
+									++selectedModel;
+									if (selectedModel >= arraySize(models)) {
+										selectedModel = arraySize(models) - 1;
 									}
 								} break;
 							}

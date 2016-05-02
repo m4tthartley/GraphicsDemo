@@ -63,10 +63,11 @@ struct Model_Vertex {
 };
 
 struct Model {
-	Model_Vertex vertices[4096*4];
-	int indices[4096*4];
+	Model_Vertex vertices[4096*16];
+	int indices[4096*16];
 	int vertexCount;
 	int indexCount;
+	float renderScale;
 };
 
 #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
@@ -120,10 +121,13 @@ gj_Mem_Stack globalMemStack;
 GLuint globalShaderProgram;
 GLuint globalWireShader;
 
-Model *globalModel;
-Model *globalShipModel;
-Model *globalCylinderModel;
-Model *globalTestModel;
+// Model *globalModel;
+// Model *globalShipModel;
+// Model *globalCylinderModel;
+// Model *globalTestModel;
+// Model *globalBigShipModel;
+Model *models[5];
+int selectedModel = 0;
 
 Vec2 globalMousePos;
 float globalScroll;
@@ -258,7 +262,7 @@ char *readObjToken (char **str) {
 	return start;
 }
 
-Model *loadModel (char *file, char *objectName) {
+Model *loadModel (char *file, float renderScale, char *objectName) {
 	
 
 	// file_data modelFile = FileRead(file);
@@ -425,11 +429,12 @@ Model *loadModel (char *file, char *objectName) {
 		perVertNormals[faces[i].points[2].vertexIndex] = norms[faces[i].points[2].normalIndex];
 	}*/
 
+	model->renderScale = renderScale;
 	return model;
 }
 
 void initOpengl (HWND windowHandle) {
-	globalMemStack = gj_initMemStack(megabytes(10));
+	globalMemStack = gj_initMemStack(megabytes(20));
 
 	createWin32OpenglContext(windowHandle);
 
@@ -446,10 +451,17 @@ void initOpengl (HWND windowHandle) {
 		OutputDebugString(str);
 	}*/
 
-	globalModel = loadModel("cube.obj", "Cube");
+	models[0] = loadModel("1v5.obj", 0.1f, "Ship_Cube.001");
+	models[1] = loadModel("119.obj", 0.005f, "engine_starboard.001_Cylinder.003");
+	models[2] = loadModel("cube.obj", 0.5f, "Cube");
+	models[3] = loadModel("test.obj", 1.0f, "Sphere");
+	models[4] = loadModel("cylinder.obj", 0.4f, "Cylinder_Cylinder.001");
+	
+	/*globalModel = loadModel("cube.obj", "Cube");
 	globalShipModel = loadModel("1v5.obj", "Ship_Cube.001");
 	globalCylinderModel = loadModel("cylinder.obj", "Cylinder_Cylinder.001");
 	globalTestModel = loadModel("test.obj", "Sphere");
+	globalBigShipModel = loadModel("119.obj", "engine_starboard.001_Cylinder.003");*/
 }
 
 /*
@@ -690,9 +702,13 @@ void drawOpengl (HWND windowHandle) {
 #endif
 
 	// drawModel(globalModel, 0.5f);
-	drawModel(globalShipModel, 0.15f);
 	// drawModel(globalCylinderModel, 0.15f);
 	// drawModel(globalTestModel, 0.5f);
+
+	// drawModel(globalShipModel, 0.15f);
+	// drawModel(globalBigShipModel, 0.15f);
+
+	drawModel(models[selectedModel], models[selectedModel]->renderScale);
 
 	SwapBuffers(hdc);
 }
