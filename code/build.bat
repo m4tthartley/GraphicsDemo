@@ -1,7 +1,7 @@
 
 @echo off
 IF NOT EXIST ..\build mkdir ..\build
-pushd ..\build
+pushd w:\GraphicsDemo\build
 
 REM set includes=-I"C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include"
 set libraries="C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64\d3dx11.lib" "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64\d3dx10.lib"

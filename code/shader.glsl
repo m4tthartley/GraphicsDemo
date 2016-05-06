@@ -6,6 +6,9 @@ varying vec4 vColor;
 varying float light;
 varying vec4 colorModifier;
 
+varying vec4 cameraVector;
+varying vec3 vNormal;
+
 #ifdef VERTEX_SHADER
 
 	void main () {
@@ -29,6 +32,9 @@ varying vec4 colorModifier;
 		// } else {
 		// 	light = clamp(lightDot, 0.0f, 1.0f);
 		// }
+
+		cameraVector = normalize(-(gl_Vertex * uTransform));
+		vNormal = rotatedNormal;
 	}
 
 #endif
@@ -37,7 +43,17 @@ varying vec4 colorModifier;
 
 	void main () {
 		// vec4(0.5f, 1.0f, 0.5f, 1.0f)
-		gl_FragColor = vColor * colorModifier * light;
+
+		vec4 lightDir = normalize(vec4(-1.0f, 1.0, 1.0f, 0.0f));
+
+		vec3 halfVector = normalize(lightDir + cameraVector);
+		vec4 specularColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		float shininess = 50.0f;
+		vec4 specular = specularColor * pow(max(dot(halfVector, vNormal), 0.0f), shininess);
+
+		vec4 ambient = 0.2f;
+
+		gl_FragColor = max((vColor * light) + specular, ambient);
 	}
 
 #endif

@@ -15,6 +15,11 @@ union Vec2 {
 	};
 };
 
+Vec2 vec2 (float x, float y) {
+	Vec2 result = {x, y};
+	return result;
+}
+
 union Vec3 {
 	struct {
 		float x;
@@ -126,7 +131,7 @@ GLuint globalWireShader;
 // Model *globalCylinderModel;
 // Model *globalTestModel;
 // Model *globalBigShipModel;
-Model *models[5];
+Model *models[6];
 int selectedModel = 0;
 
 Vec2 globalMousePos;
@@ -273,7 +278,7 @@ Model *loadModel (char *file, float renderScale, char *objectName) {
 	int unusedNormalCount = 0;
 
 	{
-		// Preprocess counts
+		// Preproccess counts
 		while (objStr - modelData.mem < modelData.size) {
 			char *token = readObjToken(&objStr);
 
@@ -320,11 +325,11 @@ Model *loadModel (char *file, float renderScale, char *objectName) {
 		if (!strcmp(token, "v")) {
 			Vec3 *vert = &tempModel->vertices[vertexCount].vertex;
 			token = readObjToken(&objStr);
-			vert->x = strtof(token, NULL);
+			vert->x = atof(token);
 			token = readObjToken(&objStr);
-			vert->y = strtof(token, NULL);
+			vert->y = atof(token);
 			token = readObjToken(&objStr);
-			vert->z = strtof(token, NULL);
+			vert->z = atof(token);
 			++vertexCount;
 
 			if (vertexCount >= arraySize(tempModel->vertices)) {
@@ -333,11 +338,11 @@ Model *loadModel (char *file, float renderScale, char *objectName) {
 		} else if (!strcmp(token, "vn")) {
 			Vec3 *norm = &tempModel->vertices[normalCount].normal;
 			token = readObjToken(&objStr);
-			norm->x = strtof(token, NULL);
+			norm->x = atof(token);
 			token = readObjToken(&objStr);
-			norm->y = strtof(token, NULL);
+			norm->y = atof(token);
 			token = readObjToken(&objStr);
-			norm->z = strtof(token, NULL);
+			norm->z = atof(token);
 			++normalCount;
 
 			if (normalCount >= arraySize(tempModel->vertices)) {
@@ -434,7 +439,7 @@ Model *loadModel (char *file, float renderScale, char *objectName) {
 }
 
 void initOpengl (HWND windowHandle) {
-	globalMemStack = gj_initMemStack(megabytes(20));
+	globalMemStack = gj_initMemStack(megabytes(50));
 
 	createWin32OpenglContext(windowHandle);
 
@@ -453,9 +458,10 @@ void initOpengl (HWND windowHandle) {
 
 	models[0] = loadModel("1v5.obj", 0.1f, "Ship_Cube.001");
 	models[1] = loadModel("119.obj", 0.005f, "engine_starboard.001_Cylinder.003");
-	models[2] = loadModel("cube.obj", 0.5f, "Cube");
-	models[3] = loadModel("test.obj", 1.0f, "Sphere");
-	models[4] = loadModel("cylinder.obj", 0.4f, "Cylinder_Cylinder.001");
+	models[2] = loadModel("smooth.obj", 0.5f, "Sphere_Sphere.001");
+	models[3] = loadModel("cube.obj", 0.5f, "Cube");
+	models[4] = loadModel("test.obj", 1.0f, "Sphere");
+	models[5] = loadModel("cylinder.obj", 0.4f, "Cylinder_Cylinder.001");
 	
 	/*globalModel = loadModel("cube.obj", "Cube");
 	globalShipModel = loadModel("1v5.obj", "Ship_Cube.001");
@@ -632,7 +638,7 @@ void drawOpengl (HWND windowHandle) {
 	GetCursorPos(&mousePos);
 	SHORT mouseLeftDown = GetAsyncKeyState(VK_LBUTTON);
 	Vec2 mouseMovement = {mousePos.x - globalMousePos.x, mousePos.y - globalMousePos.y};
-	globalMousePos = {mousePos.x, mousePos.y};
+	globalMousePos = vec2(mousePos.x, mousePos.y);
 
 	if (mouseLeftDown) {
 		yRotation += mouseMovement.x * 0.01f;

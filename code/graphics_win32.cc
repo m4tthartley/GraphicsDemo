@@ -3,6 +3,8 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <windows.h>
 #ifdef RENDER_OPENGL
 #include <GL/gl.h> // windows.h must be included before gl.h
