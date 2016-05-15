@@ -86,6 +86,19 @@ struct Model {
 #define GL_FRAGMENT_SHADER 0x8B30
 #define GL_VERTEX_SHADER 0x8B31
 
+#define GL_FRAMEBUFFER 0x8D40
+#define GL_COLOR_ATTACHMENT0 0x8CE0
+#define GL_FRAMEBUFFER_COMPLETE 0x8CD5
+
+#define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT 0x8CD6
+#define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT 0x8CD7
+#define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT 0x8CD9
+#define GL_FRAMEBUFFER_UNSUPPORTED        0x8CDD
+#define GL_FRAMEBUFFER_UNSUPPORTED_EXT    0x8CDD
+
+#define GL_RENDERBUFFER                   0x8D41
+#define GL_DEPTH_ATTACHMENT               0x8D00
+
 typedef char GLchar;
 
 typedef HGLRC WINAPI wglCreateContextAttribsARB_proc (HDC hdc, HGLRC sharedContext, const int *attribList);
@@ -121,6 +134,27 @@ glGetUniformLocation_proc *glGetUniformLocation;
 typedef void __stdcall glUniformMatrix4fv_proc (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 glUniformMatrix4fv_proc *glUniformMatrix4fv;
 
+typedef void __stdcall glUniform4f_proc (GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+glUniform4f_proc *glUniform4f;
+
+typedef void __stdcall glGenFramebuffers_proc (GLsizei n, GLuint *ids);
+glGenFramebuffers_proc *glGenFramebuffers;
+
+typedef void __stdcall glBindFramebuffer_proc (GLenum target, GLuint framebuffer);
+glBindFramebuffer_proc *glBindFramebuffer;
+
+typedef void __stdcall glFramebufferTexture_proc (GLenum target, GLenum attachment, GLuint texture, GLint level);
+glFramebufferTexture_proc *glFramebufferTexture;
+
+typedef void __stdcall glFramebufferTexture2D_proc (GLenum target, GLenum attachment,GLenum textarget, GLuint texture, GLint level);
+glFramebufferTexture2D_proc *glFramebufferTexture2D;
+
+typedef void __stdcall glDrawBuffers_proc (GLsizei n, const GLenum *bufs);
+glDrawBuffers_proc *glDrawBuffers;
+
+typedef GLenum __stdcall glCheckFramebufferStatus_proc (GLenum target);
+glCheckFramebufferStatus_proc *glCheckFramebufferStatus;
+
 gj_Mem_Stack globalMemStack;
 
 GLuint globalShaderProgram;
@@ -140,6 +174,8 @@ float globalScroll;
 float globalZoom = -3.0f;
 bool globalNormalVisualization = false;
 
+Mat4 globalProjMatrix;
+
 static float xRotation = 0.0f;
 static float yRotation = 0.0f;
 static float zRotation = 0.0f;
@@ -157,6 +193,14 @@ void loadOpenglExtensions () {
 	loadExtension(glGetShaderInfoLog);
 	loadExtension(glGetUniformLocation);
 	loadExtension(glUniformMatrix4fv);
+	loadExtension(glUniform4f);
+
+	loadExtension(glGenFramebuffers);
+	loadExtension(glBindFramebuffer);
+	loadExtension(glFramebufferTexture);
+	loadExtension(glFramebufferTexture2D);
+	loadExtension(glDrawBuffers);
+	loadExtension(glCheckFramebufferStatus);
 }
 
 void createWin32OpenglContext (HWND windowHandle) {
@@ -438,6 +482,40 @@ Model *loadModel (char *file, float renderScale, char *objectName) {
 	return model;
 }
 
+struct Depth_Cube_Frame_Buffer {
+	GLuint id;
+	GLuint texture;
+};
+
+Depth_Cube_Frame_Buffer createDepthCubeFrameBuffer () {
+	Depth_Cube_Frame_Buffer frameBuffer = {};
+	glGenFramebuffers(1, &frameBuffer.id);
+	glGenTextures(1, &frameBuffer.texture);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, tfb.frameBuffer);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, tfb.texture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	
+
+ 	glBindFramebuffer(GL_FRAMEBUFFER, tfb.frameBuffer);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tfb.texture, 0);
+	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, drawBuffers);
+
+	char *error = getTextureFrameBufferError(tfb);
+	if (error) {
+		OutputDebugString(error);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void initOpengl (HWND windowHandle) {
 	globalMemStack = gj_initMemStack(megabytes(50));
 
@@ -565,6 +643,7 @@ Mat4 operator* (Mat4 mat1, Mat4 mat2) {
 void drawModel (Model *model, float scale) {
 	glUseProgram(globalShaderProgram);
 
+	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uProjMatrix"), 1, GL_FALSE, globalProjMatrix.m);
 	Mat4 rotationMatrix = xRotate(xRotation) * yRotate(yRotation) * zRotate(zRotation);
 	Mat4 translationMatrix = translate(0.0f, 0.0f, globalZoom);
 	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uRotationMatrix"), 1, GL_FALSE, rotationMatrix.m);
@@ -585,6 +664,7 @@ void drawModel (Model *model, float scale) {
 
 	if (globalNormalVisualization) {
 		glUseProgram(globalWireShader);
+		glUniformMatrix4fv(glGetUniformLocation(globalWireShader, "uProjMatrix"), 1, GL_FALSE, globalProjMatrix.m);
 		glUniformMatrix4fv(glGetUniformLocation(globalWireShader, "uTransform"), 1, GL_FALSE, transformMatrix.m);
 
 		glBegin(GL_LINES);
@@ -599,9 +679,45 @@ void drawModel (Model *model, float scale) {
 	}
 }
 
+void drawWorld () {
+	glUseProgram(globalShaderProgram);
+
+	glUniform4f(glGetUniformLocation(globalShaderProgram, "lightPosition"), -10.0f, 7.0f, 5.0f, 1.0f);
+
+	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uProjMatrix"), 1, GL_FALSE, globalProjMatrix.m);
+	Mat4 rotationMatrix = xRotate(0);
+	Mat4 translationMatrix = translate(0.0f, 0.0f, globalZoom);
+	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uRotationMatrix"), 1, GL_FALSE, rotationMatrix.m);
+	Mat4 transformMatrix = translationMatrix * rotationMatrix;
+	glUniformMatrix4fv(glGetUniformLocation(globalShaderProgram, "uTransform"), 1, GL_FALSE, transformMatrix.m);
+
+	{glBegin(GL_QUADS);
+		glNormal3f(0.0f, 0.0f, 1.0f);
+		glVertex3f(-2.0f, 2.0f, -2.0f);
+		glVertex3f(2.0f, 2.0f, -2.0f);
+		glVertex3f(2.0f, -2.0f, -2.0f);
+		glVertex3f(-2.0f, -2.0f, -2.0f);
+
+		glNormal3f(-1.0f, 0.0f, 0.0f);
+		glVertex3f(2.0f, 2.0f, -2.0f);
+		glVertex3f(2.0f, 2.0f, 2.0f);
+		glVertex3f(2.0f, -2.0f, 2.0f);
+		glVertex3f(2.0f, -2.0f, -2.0f);
+
+		glNormal3f(0.0f, 1.0f, 0.0f);
+		glVertex3f(-2.0f, -2.0f, -2.0f);
+		glVertex3f(2.0f, -2.0f, -2.0f);
+		glVertex3f(2.0f, -2.0f, 2.0f);
+		glVertex3f(-2.0f, -2.0f, 2.0f);
+	glEnd();}
+
+	drawModel(models[selectedModel], models[selectedModel]->renderScale);
+}
+
 void drawOpengl (HWND windowHandle) {
 	HDC hdc = GetDC(windowHandle);
-	glClearColor(0.4f, 0.6f, 0.9f, 1.0f);
+	// glClearColor(0.4f, 0.6f, 0.9f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	float sw = 1 / tanf((70.0f / 2.0f) * (PI / 180.0f));
@@ -618,14 +734,14 @@ void drawOpengl (HWND windowHandle) {
 		0.0f, 0.0f, -((f * n) / (f - n)), 0.0f,
 	};*/
 
-	Mat4 proj = createPerspectiveMatrix(70, 1280.0f/720.0f, 0.1f, 100.0f);
+	globalProjMatrix = createPerspectiveMatrix(70, 1280.0f/720.0f, 0.1f, 100.0f);
 
 	glViewport(0, 0, 1280, 720);
 
 	// gluPerspective(70, 1280.0f/720.0f, 0.1f, 100.0f);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glLoadMatrixf((float*)&proj);
+	// glLoadMatrixf((float*)&proj);
 	// glOrtho(-1.0f, 1.0f, 1.0f, -1.0f, 0.1f, 100.0f);
 	// gluPerspective(70, 1280.0f/720.0f, 0.1f, 100.0f);
 
@@ -713,8 +829,6 @@ void drawOpengl (HWND windowHandle) {
 
 	// drawModel(globalShipModel, 0.15f);
 	// drawModel(globalBigShipModel, 0.15f);
-
-	drawModel(models[selectedModel], models[selectedModel]->renderScale);
 
 	SwapBuffers(hdc);
 }

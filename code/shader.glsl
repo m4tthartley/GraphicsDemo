@@ -1,6 +1,9 @@
 
+uniform mat4 uProjMatrix;
 uniform mat4 uRotationMatrix;
 uniform mat4 uTransform;
+
+uniform vec4 lightPosition;
 
 varying vec4 vColor;
 varying float light;
@@ -12,18 +15,22 @@ varying vec3 vNormal;
 #ifdef VERTEX_SHADER
 
 	void main () {
-		gl_Position = gl_ModelViewProjectionMatrix * ((gl_Vertex) * uTransform);
+		gl_Position = uProjMatrix * ((gl_Vertex) * uTransform);
 		vColor = gl_Color;
+		vColor = vec4(0.75f, 0.75f, 0.75f, 1.0f);
 
 		colorModifier = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		light = 1.0f;
 
-		vec4 lightDir = normalize(vec4(-1.0f, 1.0, 1.0f, 0.0f));
+		vec4 lightDir = normalize(lightPosition);
 		vec4 vertexNormal = vec4(gl_Normal, 0.0f);
 
 		vec4 rotatedNormal = normalize(vertexNormal * uRotationMatrix);
 		float lightDot = dot(rotatedNormal, lightDir);
 		light = (lightDot * 0.5f) + 0.5f;
+
+		float attenuation = ((gl_Vertex * uTransform) - lightPosition) / 20.0f;
+		light *= attenuation;
 
 		// if (lightDot < 0.0f) {
 		// 	colorModifier = vec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -44,12 +51,13 @@ varying vec3 vNormal;
 	void main () {
 		// vec4(0.5f, 1.0f, 0.5f, 1.0f)
 
-		vec4 lightDir = normalize(vec4(-1.0f, 1.0, 1.0f, 0.0f));
+		vec3 lightDir = normalize(lightPosition.xyz);
 
 		vec3 halfVector = normalize(lightDir + cameraVector);
 		vec4 specularColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		float shininess = 50.0f;
 		vec4 specular = specularColor * pow(max(dot(halfVector, vNormal), 0.0f), shininess);
+		specular *= 1.0f - (vColor * light);
 
 		vec4 ambient = 0.2f;
 

@@ -1,4 +1,5 @@
 
+uniform mat4 uProjMatrix;
 uniform mat4 uTransform;
 
 varying vec4 vColor;
@@ -6,7 +7,7 @@ varying vec4 vColor;
 #ifdef VERTEX_SHADER
 
 	void main () {
-		gl_Position = gl_ModelViewProjectionMatrix * ((gl_Vertex) * uTransform);
+		gl_Position = uProjMatrix * ((gl_Vertex) * uTransform);
 		vColor = gl_Color;
 	}
 
