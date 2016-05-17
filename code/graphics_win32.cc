@@ -9,6 +9,7 @@
 #ifdef RENDER_OPENGL
 #include <GL/gl.h> // windows.h must be included before gl.h
 #include <GL/glu.h>
+#include "w:/lib/glext.h"
 #endif
 #undef near // FUCK YOU WINDOWS!!!
 #undef far
