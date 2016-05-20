@@ -2,21 +2,22 @@
 uniform mat4 uProjMatrix;
 uniform mat4 uTransform;
 
-varying vec4 vColor;
-
 #ifdef VERTEX_SHADER
 
+	layout(location = 0) in vec4 vertex;
+
 	void main () {
-		gl_Position = uProjMatrix * ((gl_Vertex) * uTransform);
-		vColor = gl_Color;
+		gl_Position = uProjMatrix * ((vertex) * uTransform);
 	}
 
 #endif
 
 #ifdef FRAGMENT_SHADER
 
+	layout(location = 0) out vec4 fragment;
+
 	void main () {
-		gl_FragColor = vColor;
+		fragment = vec4(1.0f, 0.0f, 0.5f, 1.0f);
 	}
 
 #endif

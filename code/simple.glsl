@@ -1,3 +1,6 @@
+#version 330
+
+// #include "shared.glsl"
 
 uniform mat4 uProjMatrix;
 uniform mat4 uRotationMatrix;

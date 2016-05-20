@@ -1,32 +1,33 @@
 
- #version 330
-
 uniform mat4 uProjMatrix;
+uniform mat4 uRotationMatrix;
 uniform mat4 uTransform;
+uniform mat4 cameraTransform;
 
 uniform vec4 lightPosition;
 
-// varying vec4 vColor;
-
 #ifdef VERTEX_SHADER
 
-	out vec3 position;
+	layout(location = 0) in vec4 vertex;
+	layout(location = 1) in vec3 normal;
+
+	out vec4 vertexInterp;
 
 	void main () {
-		gl_Position = uProjMatrix * ((gl_Vertex) * uTransform);
-		// vColor = gl_Color;
-		position = (gl_Vertex * uTransform).xyz;
+		gl_Position = uProjMatrix * ((vertex) * uTransform * cameraTransform);
+		vertexInterp = (vertex * uTransform * cameraTransform);
 	}
 
 #endif
 
 #ifdef FRAGMENT_SHADER
 
-	in vec3 position;
-	out float fragColor;
+	layout(location = 0) out float fragmentResult;
+
+	in vec4 vertexInterp;
 
 	void main () {
-		fragColor = length(position - lightPosition);
+		fragmentResult = length(vertexInterp - lightPosition);
 	}
 
 #endif

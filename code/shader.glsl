@@ -2,10 +2,11 @@
 uniform mat4 uProjMatrix;
 uniform mat4 uRotationMatrix;
 uniform mat4 uTransform;
-
-// uniform float scale;
+uniform mat4 cameraTransform;
 
 uniform vec4 lightPosition;
+
+uniform samplerCube shadowMap;
 
 #ifdef VERTEX_SHADER
 
@@ -18,11 +19,14 @@ uniform vec4 lightPosition;
 	out vec4 colorModifier;
 	out vec3 cameraVector;
 	out vec3 vNormal;
+	out vec4 vertexInterp;
 
 	void main () {
-		gl_Position = uProjMatrix * (vertex * uTransform);
+		gl_Position = uProjMatrix * (vertex * uTransform * cameraTransform);
 		// vColor = gl_Color;
 		// vColor = vec4(0.75f, 0.75f, 0.75f, 1.0f);
+
+		vertexInterp = vertex * uTransform;
 
 		colorModifier = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		light = 1.0f;
@@ -60,23 +64,27 @@ uniform vec4 lightPosition;
 	in vec4 colorModifier;
 	in vec3 cameraVector;
 	in vec3 vNormal;
+	in vec4 vertexInterp;
 
 	void main () {
-		// vec4(0.5f, 1.0f, 0.5f, 1.0f)
+		/*vec4 lightDiff = lightPosition - vertexInterp;
+		bool inShadow = texture(shadowMap, normalize(-lightDiff.xyz)).r < length(lightDiff.xyz);
+		if (inShadow) {
+			fragmentResult = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		} else*/ {
+			vec3 lightDir = normalize(lightPosition.xyz);
 
-		vec3 lightDir = normalize(lightPosition.xyz);
+			vec3 halfVector = normalize(lightDir + cameraVector);
+			vec4 specularColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+			float shininess = 50.0f;
+			vec4 specular = specularColor * pow(max(dot(halfVector, vNormal), 0.0f), shininess);
+			specular *= 1.0f - (light);
 
-		vec3 halfVector = normalize(lightDir + cameraVector);
-		vec4 specularColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		float shininess = 50.0f;
-		vec4 specular = specularColor * pow(max(dot(halfVector, vNormal), 0.0f), shininess);
-		specular *= 1.0f - (light);
+			vec4 ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
-		vec4 ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
-
-		vec4 colorModifier = vec4(0.75f, 0.75f, 0.75f, 1.0f);
-		fragmentResult = max((colorModifier * light) + specular, ambient);
-		// fragmentResult = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+			vec4 colorModifier = vec4(0.75f, 0.75f, 0.75f, 1.0f);
+			fragmentResult = max((colorModifier * light) + specular, ambient);
+		}
 	}
 
 #endif
