@@ -91,6 +91,8 @@ struct Camera {
 	Vec3 position;
 	Vec3 rotation;
 	Mat4 perspective;
+	Vec3 direction;
+	Vec3 up;
 };
 
 #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
@@ -227,7 +229,7 @@ static float xRotation = 0.0f;
 static float yRotation = 0.0f;
 static float zRotation = 0.0f;
 
-Vec3 lightPosition = {-0.0f, 2.0f, 3.0f};
+Vec3 lightPosition = {0.0f, 2.0f, 3.0f};
 
 static Depth_Cube_Frame_Buffer shadowFrameBuffer;
 
@@ -797,6 +799,68 @@ Mat4 operator* (Mat4 mat1, Mat4 mat2) {
 	return result;
 }
 
+float length (Vec3 v) {
+	float result = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+	return result;
+}
+
+Vec3 normalize (Vec3 v) {
+	Vec3 result;
+	if (length(v)) {
+		result = {v.x/length(v), v.y/length(v), v.z/length(v)};
+	} else {
+		result = {0.0f, 0.0f, 0.0f};
+	}
+	return result;
+}
+
+Vec3 cross (Vec3 a, Vec3 b) {
+	Vec3 result;
+	result.x = a.y*b.z - a.z*b.y;
+	result.y = a.z*b.x - a.x*b.z;
+	result.z = a.x*b.y - a.y*b.x;
+	return normalize(result);
+}
+
+Vec3 operator- (Vec3 v1, Vec3 v2) {
+	Vec3 result = {v1.x - v2.x, v1.y - v2.y, v1.z - v2.z};
+	return result;
+}
+
+Vec3 operator- (Vec3 v1) {
+	Vec3 result = {-v1.x, -v1.y, -v1.z};
+	return result;
+}
+
+float dot (Vec3 v1, Vec3 v2) {
+	float result = (v1.x*v2.x +
+					v1.y*v2.y +
+					v1.z*v2.z);
+	return result;
+}
+
+Mat4 cameraMatrix (Vec3 position, Vec3 direction, Vec3 up) {
+	Vec3 x = {};
+	Vec3 y = {};
+	Vec3 z = {};
+
+	z = -normalize(direction);
+	y = up;
+	x = cross(y, z);
+	y = cross(z, x);
+	x = normalize(x);
+	y = normalize(y);
+
+	Mat4 result = {
+		x.x, x.y, x.z, -dot(x, position),
+		y.x, y.y, y.z, -dot(y, position),
+		z.x, z.y, z.z, -dot(z, position),
+		0.0f, 0.0f, 0.0f, 1.0f,
+	};
+
+	return result;
+}
+
 void drawModel (Model *model, float scale, Draw_Mode drawMode, Camera camera) {
 	GLuint worldShader;
 	if (drawMode == DRAW_MODE_FINAL) {
@@ -807,31 +871,33 @@ void drawModel (Model *model, float scale, Draw_Mode drawMode, Camera camera) {
 
 	glUseProgram(worldShader);
 
-	Mat4 rotationMatrix = xRotate(camera.rotation.x) * yRotate(camera.rotation.y) * zRotate(camera.rotation.z);
+	/*Mat4 rotationMatrix = xRotate(camera.rotation.x) * yRotate(camera.rotation.y) * zRotate(camera.rotation.z);
 	Mat4 worldRotationMatrix = identityMatrix();
 	Mat4 cameraRotationMatrix = identityMatrix();
 	if (drawMode == DRAW_MODE_FINAL) {
 		cameraRotationMatrix = rotationMatrix;
 	} else if (drawMode == DRAW_MODE_DEPTH) {
 		worldRotationMatrix = rotationMatrix;
-	}
+	}*/
 
 	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uProjMatrix"), 1, GL_FALSE, camera.perspective.m);
 	Mat4 translationMatrix = identityMatrix();
 	Mat4 transformMatrix = translationMatrix * scaleMatrix(scale);
 	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uTransform"), 1, GL_FALSE, transformMatrix.m);
 
-	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uRotationMatrix"), 1, GL_FALSE, rotationMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uRotationMatrix"), 1, GL_FALSE, identityMatrix().m/*rotationMatrix.m*/);
 
-	Mat4 cameraTranslation = translate(-camera.position.x, -camera.position.y, -camera.position.z);
+	// Mat4 cameraTranslation = translate(-camera.position.x, -camera.position.y, -camera.position.z);
 	// if (drawMode == DRAW_MODE_DEPTH) {
 	// 	cameraTranslation = translate(1.0f, -1.0f, -5.0f);
 	// }
-	Mat4 cameraMatrix = cameraTranslation * rotationMatrix;
+
+	/*Mat4 cameraMatrix = cameraTranslation * rotationMatrix;
 	if (drawMode == DRAW_MODE_DEPTH) {
 		cameraMatrix = rotationMatrix * cameraTranslation;
-	}
-	glUniformMatrix4fv(glGetUniformLocation(worldShader, "cameraTransform"), 1, GL_FALSE, cameraMatrix.m);
+	}*/
+	Mat4 matCamera = cameraMatrix(camera.position, camera.direction, camera.up);
+	glUniformMatrix4fv(glGetUniformLocation(worldShader, "cameraTransform"), 1, GL_FALSE, matCamera.m/*cameraMatrix.m*/);
 
 	glUniform4f(glGetUniformLocation(worldShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z, 1.0f);
 
@@ -1053,6 +1119,13 @@ void drawCubeIGuess () {
 #endif
 
 void drawOpengl (HWND windowHandle) {
+	Vec3 asd = {10.0f, 5.0f, 0.0f};
+	Vec3 qwe = {5.0f, 10.0f, 0.0f};
+	Vec3 test = cross(asd, qwe);
+
+	Mat4 cam = cameraMatrix({3.0f, 0.0f, 3.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f});
+	int x = 0;
+
 	HDC hdc = GetDC(windowHandle);
 	// glClearColor(0.4f, 0.6f, 0.9f, 1.0f);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1095,7 +1168,38 @@ void drawOpengl (HWND windowHandle) {
 
 
 #if 1
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowFrameBuffer.id);
+	struct Cube_Map_Side {
+		GLenum target;
+		Vec3 direction;
+		Vec3 up;
+	};
+
+	Cube_Map_Side cubeMapSides[] = {
+		{GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, {0.0f, 0.0f, -1.0f}, {0.0f, -1.0f, 0.0f}},
+		{GL_TEXTURE_CUBE_MAP_POSITIVE_Z, {0.0f, 0.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
+		{GL_TEXTURE_CUBE_MAP_NEGATIVE_X, {-1.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}},
+		{GL_TEXTURE_CUBE_MAP_POSITIVE_X, {1.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}},
+		{GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+		{GL_TEXTURE_CUBE_MAP_POSITIVE_Y, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}},
+	};
+
+	fiz (arraySize(cubeMapSides)) {
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowFrameBuffer.id);
+		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, cubeMapSides[i].target, shadowFrameBuffer.cubeTexture, 0);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		Camera lightCamera = {};
+		lightCamera.position = lightPosition;
+		lightCamera.direction = cubeMapSides[i].direction;
+		lightCamera.up = cubeMapSides[i].up;
+		// lightCamera.rotation = {0.0f, 0.0f, 0.0f};
+		lightCamera.perspective = cameraCubeMapPerspective(90);
+		drawWorld(DRAW_MODE_DEPTH, lightCamera);
+	}
+
+	/*glBindFramebuffer(GL_FRAMEBUFFER, shadowFrameBuffer.id);
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, shadowFrameBuffer.cubeTexture, 0);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 	glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
@@ -1140,16 +1244,24 @@ void drawOpengl (HWND windowHandle) {
 	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	lightCamera.rotation = {PI * 0.5f, 0.0f, 0.0f};
-	drawWorld(DRAW_MODE_DEPTH, lightCamera);
+	drawWorld(DRAW_MODE_DEPTH, lightCamera);*/
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
 
 
 	Camera playerCamera = {};
-	playerCamera.position = {0.0f, 0.0f, globalZoom};
-	playerCamera.rotation = {xRotation, yRotation, zRotation};
-	playerCamera.perspective = cameraPerspective(70);
+	playerCamera.position = lightPosition;
+	playerCamera.direction = cubeMapSides[0].direction;
+	playerCamera.up = cubeMapSides[0].up;
+	/*playerCamera.position = {gj_sin(yRotation)*5.0f, 1.0f, gj_cos(yRotation)*-5.0f};
+	playerCamera.direction = {gj_sin(yRotation)*-1.0f, 0.0f, gj_cos(yRotation)*1.0f};
+	playerCamera.up = {0.0f, 1.0f, 0.0f};*/
+
+
+	// playerCamera.position = {0.0f, 0.0f, globalZoom};
+	// playerCamera.rotation = {xRotation, yRotation, zRotation};
+	playerCamera.perspective = cameraPerspective(90);
 	drawWorld(DRAW_MODE_FINAL, playerCamera);
 
 	char shit[256];
@@ -1157,19 +1269,20 @@ void drawOpengl (HWND windowHandle) {
 	OutputDebugString(shit);
 
 
+#if 0
 	{
 		glUseProgram(cubeMapShader);
-		glUniformMatrix4fv(glGetUniformLocation(cubeMapShader, "uProjMatrix"), 1, GL_FALSE, globalProjMatrix.m);
+
+		glUniformMatrix4fv(glGetUniformLocation(cubeMapShader, "uProjMatrix"), 1, GL_FALSE, playerCamera.perspective.m);
 		Mat4 translationMatrix = translate(lightPosition);
 		Mat4 transformMatrix = translationMatrix * scaleMatrix(1.0f);
 		glUniformMatrix4fv(glGetUniformLocation(cubeMapShader, "uTransform"), 1, GL_FALSE, transformMatrix.m);
 
-		Mat4 rotationMatrix = xRotate(xRotation) * yRotate(yRotation) * zRotate(zRotation);
-		glUniformMatrix4fv(glGetUniformLocation(cubeMapShader, "uRotationMatrix"), 1, GL_FALSE, rotationMatrix.m);
+		glUniformMatrix4fv(glGetUniformLocation(cubeMapShader, "uRotationMatrix"), 1, GL_FALSE, identityMatrix().m/*rotationMatrix.m*/);
+		Mat4 matCamera = cameraMatrix(playerCamera.position, playerCamera.direction, playerCamera.up);
+		glUniformMatrix4fv(glGetUniformLocation(cubeMapShader, "cameraTransform"), 1, GL_FALSE, matCamera.m/*cameraMatrix.m*/);
 
-		Mat4 cameraTranslation = translate(0.0f, 0.0f, -globalZoom);
-		Mat4 cameraMatrix = cameraTranslation * rotationMatrix;
-		glUniformMatrix4fv(glGetUniformLocation(cubeMapShader, "cameraTransform"), 1, GL_FALSE, cameraMatrix.m);
+		glUniform4f(glGetUniformLocation(cubeMapShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z, 1.0f);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, shadowFrameBuffer.cubeTexture);
@@ -1183,7 +1296,7 @@ void drawOpengl (HWND windowHandle) {
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 	}
-
+#endif
 
 #if 0
 	{

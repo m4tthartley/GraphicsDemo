@@ -38,8 +38,8 @@ uniform samplerCube shadowMap;
 		float lightDot = dot(rotatedNormal, lightDir);
 		light = (lightDot * 0.5f) + 0.5f;
 
-		float attenuation = length((vertex * uTransform) - lightPosition) / 20.0f;
-		light *= attenuation;
+		/*float attenuation = length((vertex * uTransform) - lightPosition) / 20.0f;
+		light *= attenuation;*/
 
 		// if (lightDot < 0.0f) {
 		// 	colorModifier = vec4(1.0f, 0.0f, 0.0f, 1.0f);
