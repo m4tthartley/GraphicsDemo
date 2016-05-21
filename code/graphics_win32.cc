@@ -57,7 +57,7 @@ int CALLBACK WinMain (HINSTANCE hInstance,
 
 	if (RegisterClassA(&WindowClass))
 	{
-		Window = CreateWindowExA(0, WindowClass.lpszClassName, "Graphics Demo", WS_OVERLAPPEDWINDOW|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, 0, 0, hInstance, 0);
+		Window = CreateWindowExA(0, WindowClass.lpszClassName, "Graphics Demo", WS_OVERLAPPEDWINDOW|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, defaultViewport.x, defaultViewport.y, 0, 0, hInstance, 0);
 
 		// DWORD style = GetWindowLong(Window, GWL_STYLE);
 		// SetWindowLong(Window, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
@@ -98,7 +98,7 @@ int CALLBACK WinMain (HINSTANCE hInstance,
 										globalNormalVisualization = true;
 									}
 								} break;
-								case VK_LEFT: {
+								/*case VK_LEFT: {
 									--selectedModel;
 									if (selectedModel < 0) {
 										selectedModel = 0;
@@ -109,9 +109,20 @@ int CALLBACK WinMain (HINSTANCE hInstance,
 									if (selectedModel >= arraySize(models)) {
 										selectedModel = arraySize(models) - 1;
 									}
-								} break;
+								} break;*/
 							}
 						} break;
+						case WM_SYSKEYDOWN:
+						case WM_KEYDOWN: {
+							switch (msg.wParam) {
+								case VK_LEFT: {
+									playerFov -= 1.0f;
+								} break;
+								case VK_RIGHT: {
+									playerFov += 1.0f;
+								} break;
+							}
+						}
 						default: {
 							TranslateMessage(&msg);
 							DispatchMessage(&msg);

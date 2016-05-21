@@ -39,7 +39,11 @@ uniform samplerCube shadowMap;
 		light = (lightDot * 0.5f) + 0.5f;
 
 		/*float attenuation = length((vertex * uTransform) - lightPosition) / 20.0f;
-		light *= attenuation;*/
+		light *= 1.0f - attenuation;*/
+
+		float lightDistance = length((vertex * uTransform) - lightPosition);
+		float attenuation = 1.0f / (1.0f * pow(lightDistance, 1.1f));
+		light *= 1.0f;
 
 		// if (lightDot < 0.0f) {
 		// 	colorModifier = vec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -67,11 +71,15 @@ uniform samplerCube shadowMap;
 	in vec4 vertexInterp;
 
 	void main () {
-		/*vec4 lightDiff = lightPosition - vertexInterp;
-		bool inShadow = texture(shadowMap, normalize(-lightDiff.xyz)).r < length(lightDiff.xyz);
+		// float epsilon = 0.000001;
+		float bias = 0.02;
+		vec4 ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+
+		vec4 lightDiff = vertexInterp - lightPosition;
+		bool inShadow = texture(shadowMap, normalize(lightDiff.xyz)).r < length(lightDiff.xyz + bias);
 		if (inShadow) {
-			fragmentResult = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		} else*/ {
+			fragmentResult = ambient;
+		} else {
 			vec3 lightDir = normalize(lightPosition.xyz);
 
 			vec3 halfVector = normalize(lightDir + cameraVector);
@@ -79,8 +87,6 @@ uniform samplerCube shadowMap;
 			float shininess = 50.0f;
 			vec4 specular = specularColor * pow(max(dot(halfVector, vNormal), 0.0f), shininess);
 			specular *= 1.0f - (light);
-
-			vec4 ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
 			vec4 colorModifier = vec4(0.75f, 0.75f, 0.75f, 1.0f);
 			fragmentResult = max((colorModifier * light) + specular, ambient);

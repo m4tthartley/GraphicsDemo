@@ -203,6 +203,9 @@ glActiveTexture_proc *glActiveTexture;
 
 gj_Mem_Stack globalMemStack;
 
+Vec2 defaultViewport = {1280, 720};
+float playerFov = 70;
+
 GLuint globalShaderProgram;
 GLuint globalWireShader;
 GLuint depthShader;
@@ -229,7 +232,7 @@ static float xRotation = 0.0f;
 static float yRotation = 0.0f;
 static float zRotation = 0.0f;
 
-Vec3 lightPosition = {0.0f, 2.0f, 3.0f};
+Vec3 lightPosition = {-2.0f, 3.0f, 3.0f};
 
 static Depth_Cube_Frame_Buffer shadowFrameBuffer;
 
@@ -600,6 +603,10 @@ Depth_Cube_Frame_Buffer createDepthCubeFrameBuffer () {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, frameBuffer.cubeTexture);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_R32F, windowWidth, windowHeight, 0, GL_RED, GL_FLOAT, 0);
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_R32F, windowWidth, windowHeight, 0, GL_RED, GL_FLOAT, 0);
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_R32F, windowWidth, windowHeight, 0, GL_RED, GL_FLOAT, 0);
@@ -673,6 +680,11 @@ void initOpengl (HWND windowHandle) {
 	shadowFrameBuffer = createDepthCubeFrameBuffer();
 }
 
+float rads (float degs) {
+	float result = (degs / 180.0f) * PI;
+	return result;
+}
+
 /*
 	OpenGL perspective matrix
 
@@ -684,7 +696,7 @@ void initOpengl (HWND windowHandle) {
 	0         ,	0, -1                             ,	0                                  ,
 */
 Mat4 createPerspectiveMatrix (float fov, float aspect, float near, float far) {
-	float f = 1.0f / tanf(fov / 2.0f);
+	float f = 1.0f / tanf(rads(fov) / 2.0f);
 	Mat4 matrix = {
 		f / aspect, 0, 0, 0,
 		0, f, 0, 0,
@@ -696,7 +708,7 @@ Mat4 createPerspectiveMatrix (float fov, float aspect, float near, float far) {
 }
 
 Mat4 cameraPerspective (float fov) {
-	Mat4 result = createPerspectiveMatrix(fov, 1280.0f/720.0f, 0.1f, 100.0f);
+	Mat4 result = createPerspectiveMatrix(fov, defaultViewport.x/defaultViewport.y, 0.1f, 100.0f);
 	return result;
 }
 
@@ -902,7 +914,9 @@ void drawModel (Model *model, float scale, Draw_Mode drawMode, Camera camera) {
 	glUniform4f(glGetUniformLocation(worldShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z, 1.0f);
 
 	if (drawMode == DRAW_MODE_FINAL) {
-		glUniform1i(glGetUniformLocation(worldShader, "shadowMap"), shadowFrameBuffer.cubeTexture);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, shadowFrameBuffer.cubeTexture);
+		glUniform1i(glGetUniformLocation(worldShader, "shadowMap"), 0);
 	}
 
 #if 0
@@ -980,22 +994,16 @@ void drawWorld (Draw_Mode drawMode, Camera camera) {
 	Mat4 transformMatrix = translationMatrix * scaleMatrix(1.0f);
 	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uTransform"), 1, GL_FALSE, transformMatrix.m);
 
-	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uRotationMatrix"), 1, GL_FALSE, rotationMatrix.m);
-
-	Mat4 cameraTranslation = translate(-camera.position.x, -camera.position.y, -camera.position.z);
-	// if (drawMode == DRAW_MODE_DEPTH) {
-	// 	cameraTranslation = translate(1.0f, -1.0f, -5.0f);
-	// }
-	Mat4 cameraMatrix = cameraTranslation * rotationMatrix;
-	if (drawMode == DRAW_MODE_DEPTH) {
-		cameraMatrix = rotationMatrix * cameraTranslation;
-	}
-	glUniformMatrix4fv(glGetUniformLocation(worldShader, "cameraTransform"), 1, GL_FALSE, cameraMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uRotationMatrix"), 1, GL_FALSE, identityMatrix().m/*rotationMatrix.m*/);
+	Mat4 matCamera = cameraMatrix(camera.position, camera.direction, camera.up);
+	glUniformMatrix4fv(glGetUniformLocation(worldShader, "cameraTransform"), 1, GL_FALSE, matCamera.m/*cameraMatrix.m*/);
 
 	glUniform4f(glGetUniformLocation(worldShader, "lightPosition"), lightPosition.x, lightPosition.y, lightPosition.z, 1.0f);
 
 	if (drawMode == DRAW_MODE_FINAL) {
-		glUniform1i(glGetUniformLocation(worldShader, "shadowMap"), shadowFrameBuffer.cubeTexture);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, shadowFrameBuffer.cubeTexture);
+		glUniform1i(glGetUniformLocation(worldShader, "shadowMap"), 0);
 	}
 
 	Vec3 walls[] = {
@@ -1041,7 +1049,7 @@ void drawWorld (Draw_Mode drawMode, Camera camera) {
 		10, 11, 8,
 	};
 
-#if 0
+#if 1
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0/*sizeof(Model_Vertex)*/, walls);
@@ -1131,13 +1139,13 @@ void drawOpengl (HWND windowHandle) {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	float sw = 1 / tanf((70.0f / 2.0f) * (PI / 180.0f));
-	float sh = 1 / tanf((70.0f / 2.0f) * (PI / 180.0f));
+	// float sw = 1 / tanf((70.0f / 2.0f) * (PI / 180.0f));
+	// float sh = 1 / tanf((70.0f / 2.0f) * (PI / 180.0f));
 	/*float sw = 1 / tanf((70.0f / 2.0f) * (1280.0f / 720.0f));
 	float sh = 1 / tanf((70.0f / 2.0f) * (720.0f / 1280.0f));*/
-	float n = 0.1f;
-	float f = 100.0f;
-	float aspect = (1280.0f / 720.0f);
+	// float n = 0.1f;
+	// float f = 100.0f;
+	// float aspect = (1280.0f / 720.0f);
 	/*float projectionMatrix[] = {
 		sw/aspect, 0.0f, 0.0f, 0.0f,
 		0.0f, sh, 0.0f, 0.0f,
@@ -1145,9 +1153,9 @@ void drawOpengl (HWND windowHandle) {
 		0.0f, 0.0f, -((f * n) / (f - n)), 0.0f,
 	};*/
 
-	globalProjMatrix = createPerspectiveMatrix(70, 1280.0f/720.0f, 0.1f, 100.0f);
+	globalProjMatrix = createPerspectiveMatrix(70, defaultViewport.x/defaultViewport.y, 0.1f, 100.0f);
 
-	glViewport(0, 0, 1280, 720);
+	glViewport(0, 0, defaultViewport.x, defaultViewport.y);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
@@ -1179,9 +1187,11 @@ void drawOpengl (HWND windowHandle) {
 		{GL_TEXTURE_CUBE_MAP_POSITIVE_Z, {0.0f, 0.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
 		{GL_TEXTURE_CUBE_MAP_NEGATIVE_X, {-1.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}},
 		{GL_TEXTURE_CUBE_MAP_POSITIVE_X, {1.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}},
-		{GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-		{GL_TEXTURE_CUBE_MAP_POSITIVE_Y, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}},
+		{GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}},
+		{GL_TEXTURE_CUBE_MAP_POSITIVE_Y, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
 	};
+
+	glViewport(0, 0, 1024, 1024);
 
 	fiz (arraySize(cubeMapSides)) {
 		glBindFramebuffer(GL_FRAMEBUFFER, shadowFrameBuffer.id);
@@ -1249,27 +1259,28 @@ void drawOpengl (HWND windowHandle) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
 
+	glViewport(0, 0, defaultViewport.x, defaultViewport.y);
 
 	Camera playerCamera = {};
-	playerCamera.position = lightPosition;
+	/*playerCamera.position = lightPosition;
 	playerCamera.direction = cubeMapSides[0].direction;
-	playerCamera.up = cubeMapSides[0].up;
-	/*playerCamera.position = {gj_sin(yRotation)*5.0f, 1.0f, gj_cos(yRotation)*-5.0f};
-	playerCamera.direction = {gj_sin(yRotation)*-1.0f, 0.0f, gj_cos(yRotation)*1.0f};
-	playerCamera.up = {0.0f, 1.0f, 0.0f};*/
+	playerCamera.up = cubeMapSides[0].up;*/
+	playerCamera.position = {gj_sin(yRotation)*5.0f, 2.0f, gj_cos(yRotation)*-5.0f};
+	playerCamera.direction = {gj_sin(yRotation)*-1.0f, -0.5f, gj_cos(yRotation)*1.0f};
+	playerCamera.up = {0.0f, 1.0f, 0.0f};
 
 
 	// playerCamera.position = {0.0f, 0.0f, globalZoom};
 	// playerCamera.rotation = {xRotation, yRotation, zRotation};
-	playerCamera.perspective = cameraPerspective(90);
+	playerCamera.perspective = cameraPerspective(playerFov);
 	drawWorld(DRAW_MODE_FINAL, playerCamera);
 
 	char shit[256];
-	sprintf(shit, "zoom %f xRot %f yRot %f \n", globalZoom, xRotation, yRotation);
+	sprintf(shit, "zoom %f xRot %f yRot %f fov %f \n", globalZoom, xRotation, yRotation, playerFov);
 	OutputDebugString(shit);
 
 
-#if 0
+#if 1
 	{
 		glUseProgram(cubeMapShader);
 
@@ -1295,34 +1306,6 @@ void drawOpengl (HWND windowHandle) {
 		glDrawElements(GL_TRIANGLES, models[2]->indexCount, GL_UNSIGNED_INT, models[2]->indices);
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
-	}
-#endif
-
-#if 0
-	{
-		float Proj[] = {
-			2.0/1280, 0, 0, 0,
-			0, -(2.0f/720), 0, 0,
-			0, 0, -(1.0f/20.0f), 0,
-			-1, 1, 0, 1,
-		};
-
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf(Proj);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-
-		glUseProgram(0);
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, shadowFrameBuffer.cubeTexture);
-		// glBindTexture(GL_TEXTURE_2D, shadowFrameBuffer.depthTexture);
-		glTranslatef(100, 100, 0);
-		{glBegin(GL_QUADS);
-			glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, 0);
-			glTexCoord2f(1.0f, 0.0f); glVertex3f(102.4f, 0, 0);
-			glTexCoord2f(1.0f, 1.0f); glVertex3f(102.4f, 102.4f, 0);
-			glTexCoord2f(0.0f, 1.0f); glVertex3f(0, 102.4f, 0);
-		glEnd();}
 	}
 #endif
 

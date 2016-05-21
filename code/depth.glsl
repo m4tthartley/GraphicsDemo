@@ -15,7 +15,7 @@ uniform vec4 lightPosition;
 
 	void main () {
 		gl_Position = uProjMatrix * ((vertex) * uTransform * cameraTransform);
-		vertexInterp = (vertex * uTransform * cameraTransform);
+		vertexInterp = (vertex * uTransform);
 	}
 
 #endif
