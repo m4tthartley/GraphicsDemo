@@ -55,26 +55,6 @@ union Mat4 {
 };
 #pragma pack(pop)
 
-struct model_face {
-	struct {
-		int vertexIndex;
-		int normalIndex;
-	} points[3];
-};
-
-struct Model_Vertex {
-	Vec3 vertex;
-	Vec3 normal;
-};
-
-struct Model {
-	Model_Vertex vertices[4096*16];
-	int indices[4096*16];
-	int vertexCount;
-	int indexCount;
-	float renderScale;
-};
-
 struct Depth_Cube_Frame_Buffer {
 	GLuint id;
 	GLuint depthTexture;
@@ -200,7 +180,6 @@ glDebugMessageControl_proc *glDebugMessageControl;
 typedef void __stdcall glActiveTexture_proc (GLenum texture);
 glActiveTexture_proc *glActiveTexture;
 
-
 gj_Mem_Stack globalMemStack;
 
 Vec2 defaultViewport = {1280, 720};
@@ -212,12 +191,14 @@ GLuint depthShader;
 GLuint simpleShader;
 GLuint cubeMapShader;
 
+#include "mesh.cc"
+
 // Model *globalModel;
 // Model *globalShipModel;
 // Model *globalCylinderModel;
 // Model *globalTestModel;
 // Model *globalBigShipModel;
-Model *models[6];
+Model models[6];
 int selectedModel = 0;
 
 Vec2 globalMousePos;
@@ -232,7 +213,7 @@ static float xRotation = 0.0f;
 static float yRotation = 0.0f;
 static float zRotation = 0.0f;
 
-Vec3 lightPosition = {-2.0f, 3.0f, 3.0f};
+Vec3 lightPosition = {-1.0f, 2.0f, 2.0f};
 
 static Depth_Cube_Frame_Buffer shadowFrameBuffer;
 
@@ -375,194 +356,6 @@ GLuint createShader (char *file) {
 	glLinkProgram(program);
 
 	return program;
-}
-
-char *readObjToken (char **str) {
-	while (**str == ' ' || **str == '\t') {
-		++*str;
-	}
-
-	char *start = *str;
-
-	while (**str != ' ' && **str != '\t' && **str != '\n' && **str != 0) {
-		++*str;
-	}
-
-	**str = 0;
-	++*str;
-
-	return start;
-}
-
-Model *loadModel (char *file, float renderScale, char *objectName) {
-	
-
-	// file_data modelFile = FileRead(file);
-	gj_Data modelData = gj_readFile(file, &globalMemStack);
-	char *objStr = (char*)modelData.mem;
-
-	int unusedVertexCount = 0;
-	int unusedNormalCount = 0;
-
-	{
-		// Preproccess counts
-		while (objStr - modelData.mem < modelData.size) {
-			char *token = readObjToken(&objStr);
-
-			if (!strcmp(token, "v")) {
-				++unusedVertexCount;
-				int x = 0;
-			} else if (!strcmp(token, "vn")) {
-				++unusedNormalCount;
-				int x = 0;
-			} else if (!strcmp(token, "o")) {
-				token = readObjToken(&objStr);
-				if (!strcmp(token, objectName)) {
-					break;
-				}
-				int x = 0;
-			} else if (!strcmp(token, "f")) {
-				int x = 0;
-			}
-		}
-	}
-
-	// objStr = (char*)modelData.mem;
-
-	/*s32 modelMemSize = sizeof(v3)*vertMax + sizeof(v3)*vertMax + sizeof(v3)*normMax + sizeof(model_face)*faceMax + sizeof(iv3)*faceMax;
-	char *modelMem = MemPoolAlloc(assetMemPool, modelMemSize);
-	verts = (v3*)modelMem;
-	perVertNormals = verts + vertMax;
-	norms = perVertNormals + vertMax;
-	faces = (model_face*)(norms + normMax);
-	indices = (iv3*)(faces + faceMax);
-	s32 vertCount = 0;
-	s32 normCount = 0;
-	s32 faceCount = 0;*/
-
-	Model *model = (Model*)gj_pushMemStack(&globalMemStack, sizeof(Model));
-	Model *tempModel = (Model*)gj_pushMemStack(&globalMemStack, sizeof(Model));
-	int vertexCount = 0;
-	int normalCount = 0;
-	// int indexCount = 0;
-
-	while (objStr - modelData.mem < modelData.size) {
-		char *token = readObjToken(&objStr);
-
-		if (!strcmp(token, "v")) {
-			Vec3 *vert = &tempModel->vertices[vertexCount].vertex;
-			token = readObjToken(&objStr);
-			vert->x = atof(token);
-			token = readObjToken(&objStr);
-			vert->y = atof(token);
-			token = readObjToken(&objStr);
-			vert->z = atof(token);
-			++vertexCount;
-
-			if (vertexCount >= arraySize(tempModel->vertices)) {
-				assert(false);
-			}
-		} else if (!strcmp(token, "vn")) {
-			Vec3 *norm = &tempModel->vertices[normalCount].normal;
-			token = readObjToken(&objStr);
-			norm->x = atof(token);
-			token = readObjToken(&objStr);
-			norm->y = atof(token);
-			token = readObjToken(&objStr);
-			norm->z = atof(token);
-			++normalCount;
-
-			if (normalCount >= arraySize(tempModel->vertices)) {
-				assert(false);
-			}
-		} else if (!strcmp(token, "f")) {
-			// token = readObjToken(&objStr);
-			/*faces[faceCount].points[0].vertexIndex = atoi(token) - 1;
-			token += 3;
-			faces[faceCount].points[0].normalIndex = atoi(token) - 1;
-
-			token = readObjToken(&objStr);
-			faces[faceCount].points[1].vertexIndex = atoi(token) - 1;
-			token += 3;
-			faces[faceCount].points[1].normalIndex = atoi(token) - 1;
-
-			token = readObjToken(&objStr);
-			faces[faceCount].points[2].vertexIndex = atoi(token) - 1;
-			token += 3;
-			faces[faceCount].points[2].normalIndex = atoi(token) - 1;*/
-
-			token = readObjToken(&objStr);
-			int index1Vertex = atoi(token) - 1;
-			while (*token != '/') {
-				++token;
-			}
-			token += 2;
-			int index1Normal = atoi(token) - 1;
-
-			token = readObjToken(&objStr);
-			int index2Vertex = atoi(token) - 1;
-			while (*token != '/') {
-				++token;
-			}
-			token += 2;
-			int index2Normal = atoi(token) - 1;
-
-			token = readObjToken(&objStr);
-			int index3Vertex = atoi(token) - 1;
-			while (*token != '/') {
-				++token;
-			}
-			token += 2;
-			int index3Normal = atoi(token) - 1;
-
-			model->indices[model->indexCount] = model->vertexCount;
-			model->indices[model->indexCount+1] = model->vertexCount+1;
-			model->indices[model->indexCount+2] = model->vertexCount+2;
-
-			model->vertices[model->vertexCount].vertex = tempModel->vertices[index1Vertex - unusedVertexCount].vertex;
-			model->vertices[model->vertexCount+1].vertex = tempModel->vertices[index2Vertex - unusedVertexCount].vertex;
-			model->vertices[model->vertexCount+2].vertex = tempModel->vertices[index3Vertex - unusedVertexCount].vertex;
-
-			model->vertices[model->vertexCount].normal = tempModel->vertices[index1Normal - unusedNormalCount].normal;
-			model->vertices[model->vertexCount+1].normal = tempModel->vertices[index2Normal - unusedNormalCount].normal;
-			model->vertices[model->vertexCount+2].normal = tempModel->vertices[index3Normal - unusedNormalCount].normal;
-
-			/*model->vertices[model->vertexCount].vertex = tempModel->vertices[index1Vertex].vertex;
-			model->vertices[model->vertexCount].vertex = tempModel->vertices[index2Vertex].vertex;
-			model->vertices[model->vertexCount].vertex = tempModel->vertices[index3Vertex].vertex;*/
-
-			model->indexCount += 3;
-			model->vertexCount += 3;
-
-			if (model->indexCount >= arraySize(model->indices) - 2) {
-				assert(false);
-			}
-			if (model->vertexCount >= arraySize(model->vertices) - 2) {
-				assert(false);
-			}
-
-			/*indices[faceCount].x = faces[faceCount].points[0].vertexIndex;
-			indices[faceCount].y = faces[faceCount].points[1].vertexIndex;
-			indices[faceCount].z = faces[faceCount].points[2].vertexIndex;*/
-
-			// ++faceCount;
-		}
-
-		
-	}
-
-	// model->vertexCount = vertexCount;
-
-	int x = 0;
-
-	/*fiz (faceMax) {
-		perVertNormals[faces[i].points[0].vertexIndex] = norms[faces[i].points[0].normalIndex];
-		perVertNormals[faces[i].points[1].vertexIndex] = norms[faces[i].points[1].normalIndex];
-		perVertNormals[faces[i].points[2].vertexIndex] = norms[faces[i].points[2].normalIndex];
-	}*/
-
-	model->renderScale = renderScale;
-	return model;
 }
 
 char *getFrameBufferError (GLuint id) {
@@ -873,7 +666,7 @@ Mat4 cameraMatrix (Vec3 position, Vec3 direction, Vec3 up) {
 	return result;
 }
 
-void drawModel (Model *model, float scale, Draw_Mode drawMode, Camera camera) {
+void drawModel (Model model, float scale, Draw_Mode drawMode, Camera camera) {
 	GLuint worldShader;
 	if (drawMode == DRAW_MODE_FINAL) {
 		worldShader = globalShaderProgram;
@@ -934,14 +727,14 @@ void drawModel (Model *model, float scale, Draw_Mode drawMode, Camera camera) {
 #else
 	// glUseProgram(simpleShader);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), model->vertices);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), model.vertices);
 	glEnableVertexAttribArray(1);
-	char *data = (char*)model->vertices;
+	char *data = (char*)model.vertices;
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), data + sizeof(Vec3));
 
 	glPushMatrix();
 	// glTranslatef(0.0f, 0.0f, -8.0f);
-	glDrawElements(GL_TRIANGLES, model->indexCount, GL_UNSIGNED_INT, model->indices);
+	glDrawElements(GL_TRIANGLES, model.indexCount, GL_UNSIGNED_INT, model.indices);
 	glPopMatrix();
 
 	glDisableVertexAttribArray(0);
@@ -957,11 +750,11 @@ void drawModel (Model *model, float scale, Draw_Mode drawMode, Camera camera) {
 			glUniformMatrix4fv(glGetUniformLocation(globalWireShader, "uTransform"), 1, GL_FALSE, transformMatrix.m);
 
 			glBegin(GL_LINES);
-			fiz (model->vertexCount) {
+			fiz (model.vertexCount) {
 				glColor4f(1.0f, 0.0f, 0.5f, 1.0f);
-				Vec3 vertex = model->vertices[i].vertex * scale;
+				Vec3 vertex = model.vertices[i].vertex * scale;
 				glVertex3f(vertex.x, vertex.y, vertex.z);
-				Vec3 normal = vertex + (model->vertices[i].normal * 0.1f);
+				Vec3 normal = vertex + (model.vertices[i].normal * 0.1f);
 				glVertex3f(normal.x, normal.y, normal.z);
 			}
 			glEnd();
@@ -991,7 +784,7 @@ void drawWorld (Draw_Mode drawMode, Camera camera) {
 
 	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uProjMatrix"), 1, GL_FALSE, camera.perspective.m);
 	Mat4 translationMatrix = identityMatrix();
-	Mat4 transformMatrix = translationMatrix * scaleMatrix(1.0f);
+	Mat4 transformMatrix = translationMatrix * scaleMatrix(2.0f);
 	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uTransform"), 1, GL_FALSE, transformMatrix.m);
 
 	glUniformMatrix4fv(glGetUniformLocation(worldShader, "uRotationMatrix"), 1, GL_FALSE, identityMatrix().m/*rotationMatrix.m*/);
@@ -1062,7 +855,7 @@ void drawWorld (Draw_Mode drawMode, Camera camera) {
 
 #endif
 
-	drawModel(models[selectedModel], models[selectedModel]->renderScale, drawMode, camera);
+	drawModel(models[selectedModel], models[selectedModel].renderScale, drawMode, camera);
 }
 
 #if 0
@@ -1174,6 +967,13 @@ void drawOpengl (HWND windowHandle) {
 		xRotation += mouseMovement.y * 0.01f;
 	}
 
+	// Rotate the light
+	static float lightRotation = 0.0f;
+	lightRotation += 0.01f;
+	if (lightRotation > PI2) {
+		lightRotation -= PI2;
+	}
+	lightPosition = {gj_sin(lightRotation)*-3.0f, 3.0f, gj_cos(lightRotation)*-3.0f};
 
 #if 1
 	struct Cube_Map_Side {
@@ -1197,7 +997,7 @@ void drawOpengl (HWND windowHandle) {
 		glBindFramebuffer(GL_FRAMEBUFFER, shadowFrameBuffer.id);
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, cubeMapSides[i].target, shadowFrameBuffer.cubeTexture, 0);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0);
-		glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+		glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		Camera lightCamera = {};
@@ -1301,9 +1101,9 @@ void drawOpengl (HWND windowHandle) {
 
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), models[2]->vertices);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), ((char*)models[2]->vertices) + sizeof(Vec3));
-		glDrawElements(GL_TRIANGLES, models[2]->indexCount, GL_UNSIGNED_INT, models[2]->indices);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), models[2].vertices);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), ((char*)models[2].vertices) + sizeof(Vec3));
+		glDrawElements(GL_TRIANGLES, models[2].indexCount, GL_UNSIGNED_INT, models[2].indices);
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 	}

@@ -14,6 +14,7 @@ typedef long long s64;
 #define assert(expression) {if (!(expression)) { *((int*)0) = 0; }}
 #define null 0
 #define PI 3.14159265359f
+#define PI2 (3.14159265359f*2.0f)
 
 #define kilobytes(num) (num*1024)
 #define megabytes(num) (kilobytes(num)*1024)

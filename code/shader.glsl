@@ -15,7 +15,7 @@ uniform samplerCube shadowMap;
 	// layout(location
 
 	// out vec4 vColor;
-	out float light;
+	// out float light;
 	out vec4 colorModifier;
 	out vec3 cameraVector;
 	out vec3 vNormal;
@@ -29,21 +29,6 @@ uniform samplerCube shadowMap;
 		vertexInterp = vertex * uTransform;
 
 		colorModifier = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		light = 1.0f;
-
-		vec4 lightDir = normalize(lightPosition);
-		vec4 vertexNormal = vec4(inNormal, 0.0f);
-
-		vec4 rotatedNormal = normalize(vertexNormal * uRotationMatrix);
-		float lightDot = dot(rotatedNormal, lightDir);
-		light = (lightDot * 0.5f) + 0.5f;
-
-		/*float attenuation = length((vertex * uTransform) - lightPosition) / 20.0f;
-		light *= 1.0f - attenuation;*/
-
-		float lightDistance = length((vertex * uTransform) - lightPosition);
-		float attenuation = 1.0f / (1.0f * pow(lightDistance, 1.1f));
-		light *= 1.0f;
 
 		// if (lightDot < 0.0f) {
 		// 	colorModifier = vec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -54,6 +39,9 @@ uniform samplerCube shadowMap;
 		// }
 
 		cameraVector = normalize(-(vertex * uTransform)).xyz;
+
+		vec4 vertexNormal = vec4(inNormal, 0.0f);
+		vec4 rotatedNormal = normalize(vertexNormal * uRotationMatrix);
 		vNormal = rotatedNormal.xyz;
 	}
 
@@ -64,20 +52,33 @@ uniform samplerCube shadowMap;
 	layout(location = 0) out vec4 fragmentResult;
 
 	// in vec4 vColor;
-	in float light;
+	// in float light;
 	in vec4 colorModifier;
 	in vec3 cameraVector;
 	in vec3 vNormal;
 	in vec4 vertexInterp;
 
 	void main () {
+		float light = 1.0f;
+
+		vec3 lightDir = normalize(lightPosition.xyz - vertexInterp.xyz);
+
+		float lightDot = dot(vNormal, lightDir);
+		light = lightDot/*(lightDot * 0.5f) + 0.5f*/;
+
+		float lightDistance = length((vertexInterp) - lightPosition);
+		float attenuation = 1.0f / (1.0f * pow(lightDistance, 1.1f));
+		light *= 1.0f;
+
 		// float epsilon = 0.000001;
-		float bias = 0.02;
+		float bias = 0.02f;
 		vec4 ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
 		vec4 lightDiff = vertexInterp - lightPosition;
-		bool inShadow = texture(shadowMap, normalize(lightDiff.xyz)).r < length(lightDiff.xyz + bias);
-		if (inShadow) {
+		float sample = texture(shadowMap, normalize(lightDiff.xyz)).r;
+		bool inShadow = sample < length(lightDiff.xyz) - bias;
+		// length(vertexInterp - lightPosition)
+		if (sample > bias && inShadow) {
 			fragmentResult = ambient;
 		} else {
 			vec3 lightDir = normalize(lightPosition.xyz);
