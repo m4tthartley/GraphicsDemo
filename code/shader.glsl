@@ -71,7 +71,7 @@ uniform samplerCube shadowMap;
 		light *= 1.0f;
 
 		// float epsilon = 0.000001;
-		float bias = 0.02f;
+		float bias = 0.005f;
 		vec4 ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
 		vec4 lightDiff = vertexInterp - lightPosition;

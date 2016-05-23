@@ -180,6 +180,16 @@ glDebugMessageControl_proc *glDebugMessageControl;
 typedef void __stdcall glActiveTexture_proc (GLenum texture);
 glActiveTexture_proc *glActiveTexture;
 
+typedef void glGenBuffers_proc (GLsizei n, GLuint * buffers);
+glGenBuffers_proc *glGenBuffers;
+
+typedef void glBufferData_proc (GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
+glBufferData_proc *glBufferData;
+
+typedef void glBindBuffer_proc (GLenum target, GLuint buffer);
+glBindBuffer_proc *glBindBuffer;
+
+
 gj_Mem_Stack globalMemStack;
 
 Vec2 defaultViewport = {1280, 720};
@@ -249,6 +259,10 @@ void loadOpenglExtensions () {
 	loadExtension(glDebugMessageControl);
 
 	loadExtension(glActiveTexture);
+
+	loadExtension(glGenBuffers);
+	loadExtension(glBufferData);
+	loadExtension(glBindBuffer);
 }
 
 void createWin32OpenglContext (HWND windowHandle) {
@@ -725,20 +739,25 @@ void drawModel (Model model, float scale, Draw_Mode drawMode, Camera camera) {
 
 	glEnd();
 #else
-	// glUseProgram(simpleShader);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, model.vertexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.indexBuffer);
+
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), model.vertices);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), 0/*model.vertices*/);
 	glEnableVertexAttribArray(1);
 	char *data = (char*)model.vertices;
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), data + sizeof(Vec3));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), (void*)sizeof(Vec3)/*data + sizeof(Vec3)*/);
 
 	glPushMatrix();
 	// glTranslatef(0.0f, 0.0f, -8.0f);
-	glDrawElements(GL_TRIANGLES, model.indexCount, GL_UNSIGNED_INT, model.indices);
+	glDrawElements(GL_TRIANGLES, model.indexCount, GL_UNSIGNED_INT, 0/*model.indices*/);
 	glPopMatrix();
 
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 
 #endif

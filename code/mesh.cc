@@ -24,6 +24,9 @@ struct Model {
 	int vertexCount;
 	int indexCount;
 	float renderScale;
+
+	GLuint vertexBuffer;
+	GLuint indexBuffer;
 };
 
 char *readObjToken (char **str) {
@@ -226,15 +229,16 @@ Model loadModel (char *file, float renderScale, char *objectName) {
 		
 	}
 
-	// model->vertexCount = vertexCount;
+	glGenBuffers(1, &model.vertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, model.vertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, modelVertexMemory*sizeof(Model_Vertex), model.vertices, GL_STATIC_DRAW);
 
-	int x = 0;
+	glGenBuffers(1, &model.indexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.indexBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faceMemoryNeeded*3*sizeof(int), model.indices, GL_STATIC_DRAW);
 
-	/*fiz (faceMax) {
-		perVertNormals[faces[i].points[0].vertexIndex] = norms[faces[i].points[0].normalIndex];
-		perVertNormals[faces[i].points[1].vertexIndex] = norms[faces[i].points[1].normalIndex];
-		perVertNormals[faces[i].points[2].vertexIndex] = norms[faces[i].points[2].normalIndex];
-	}*/
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	model.renderScale = renderScale;
 	return model;
