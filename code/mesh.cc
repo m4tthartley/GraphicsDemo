@@ -50,7 +50,7 @@ Model loadModel (char *file, float renderScale, char *objectName) {
 	
 
 	// file_data modelFile = FileRead(file);
-	gj_Data modelData = gj_readFile(file, &globalMemStack);
+	gjData modelData = gjReadFile(file, &globalMemStack);
 	char *objStr = (char*)modelData.mem;
 
 	int unusedVertexCount = 0;
@@ -114,10 +114,10 @@ Model loadModel (char *file, float renderScale, char *objectName) {
 	Model model = {};
 	int modelVertexMemory = faceMemoryNeeded*3;
 	// int modelNormalMemory = 
-	model.vertices = (Model_Vertex*)gj_pushMemStack(&globalMemStack, modelVertexMemory*sizeof(Model_Vertex));
-	model.indices = (int*)gj_pushMemStack(&globalMemStack, faceMemoryNeeded*3*sizeof(int));
-	Vec3 *tempVertices = (Vec3*)gj_pushMemStack(&globalMemStack, vertexMemoryNeeded);
-	Vec3 *tempNormals = (Vec3*)gj_pushMemStack(&globalMemStack, normalMemoryNeeded);
+	model.vertices = (Model_Vertex*)gjPushMemStack(&globalMemStack, modelVertexMemory*sizeof(Model_Vertex));
+	model.indices = (int*)gjPushMemStack(&globalMemStack, faceMemoryNeeded*3*sizeof(int));
+	Vec3 *tempVertices = (Vec3*)gjPushMemStack(&globalMemStack, vertexMemoryNeeded);
+	Vec3 *tempNormals = (Vec3*)gjPushMemStack(&globalMemStack, normalMemoryNeeded);
 
 	// Model *tempModel = (Model*)gj_pushMemStack(&globalMemStack, sizeof(Model));
 	int vertexCount = 0;

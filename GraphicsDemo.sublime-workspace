@@ -39,15 +39,202 @@
 			"file": "code/graphics_win32.cc",
 			"settings":
 			{
-				"buffer_size": 9704,
+				"buffer_size": 3106,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"contents": "The system cannot find the path specified.\n[Finished in 0.0s with exit code 1]\n[shell_cmd: /code/build.bat]\n[dir: W:\\GraphicsDemo\\code]\n[path: C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Common7\\IDE\\CommonExtensions\\Microsoft\\TestWindow;C:\\Program Files (x86)\\MSBuild\\12.0\\bin\\amd64;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\BIN\\amd64;C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\VCPackages;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Common7\\IDE;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Common7\\Tools;C:\\Program Files (x86)\\HTML Help Workshop;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Team Tools\\Performance Tools\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\Team Tools\\Performance Tools;C:\\Program Files (x86)\\Windows Kits\\8.1\\bin\\x64;C:\\Program Files (x86)\\Windows Kits\\8.1\\bin\\x86;C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v8.1A\\bin\\NETFX 4.5.1 Tools\\x64\\;C:\\VulkanSDK\\1.0.3.1\\Bin;C:\\VulkanSDK\\1.0.3.1\\Bin32;C:\\ProgramData\\Oracle\\Java\\javapath;C:\\Program Files\\Broadcom\\Broadcom 802.11 Network Adapter\\Driver;;C:\\Program Files (x86)\\Intel\\iCLS Client\\;C:\\Program Files\\Intel\\iCLS Client\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files\\WIDCOMM\\Bluetooth Software\\;C:\\Program Files\\WIDCOMM\\Bluetooth Software\\syswow64;;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit\\;C:\\Program Files\\Microsoft SQL Server\\110\\Tools\\Binn\\;C:\\Program Files (x86)\\Microsoft SDKs\\TypeScript\\1.0\\;C:\\Program Files (x86)\\Visual Leak Detector\\bin\\Win32;C:\\Program Files (x86)\\Visual Leak Detector\\bin\\Win64;C:\\Program Files (x86)\\Google\\Chrome\\Application;C:\\Program Files\\Broadcom\\Broadcom 802.11 Network Adapter\\Driver;C:\\Program Files (x86)\\Intel\\iCLS Client\\;C:\\Program Files\\Intel\\iCLS Client\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\DAL;C:\\Program Files\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files (x86)\\Intel\\Intel(R) Management Engine Components\\IPT;C:\\Program Files\\WIDCOMM\\Bluetooth Software\\;C:\\Program Files\\WIDCOMM\\Bluetooth Software\\syswow64;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit\\;C:\\Users\\Matt\\AppData\\Local\\Programs\\Git\\cmd;C:\\Program Files (x86)\\youtube-dl;C:\\Program Files (x86)\\Microsoft DirectX SDK (June 2010)\\Include;C:\\Program Files (x86)\\Microsoft DirectX SDK (June 2010)\\Lib]",
+			"file": "code/opengl.cc",
 			"settings":
 			{
-				"buffer_size": 3017,
+				"buffer_size": 37822,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/depth.glsl",
+			"settings":
+			{
+				"buffer_size": 587,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/shader.glsl",
+			"settings":
+			{
+				"buffer_size": 2506,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/wire.glsl",
+			"settings":
+			{
+				"buffer_size": 332,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/shader.hlsl",
+			"settings":
+			{
+				"buffer_size": 879,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "\n// gj lib, The Giantjelly library?\n\ntypedef unsigned char u8;\ntypedef unsigned short u16;\ntypedef unsigned int uint;\ntypedef unsigned long long u64;\ntypedef char s8;\ntypedef short s16;\ntypedef long long s64;\n\n#define bool int\n\n#define assert(expression) {if (!(expression)) { *((int*)0) = 0; }}\n#define null 0\n#define PI 3.14159265359f\n#define PI2 (3.14159265359f*2.0f)\n\n#define kilobytes(num) (num*1024)\n#define megabytes(num) (kilobytes(num)*1024)\n#define gigabytes(num) (megabytes(num)*1024)\n\n#define arraySize(array) (sizeof(array)/sizeof(array[0]))\n#define fiz(count) for (int i = 0; i < count; ++i)\n#define fjz(count) for (int j = 0; j < count; ++j)\n#define fkz(count) for (int k = 0; k < count; ++k)\n\ninline float gj_sin (float num) {\n	float result = sinf(num);\n	return result;\n}\n\ninline float gj_cos (float num) {\n	float result = cosf(num);\n	return result;\n}\n\nstruct gj_Data {\n	char *mem;\n	size_t size;\n};\n\nstruct gj_Mem_Stack {\n	char *mem;\n	size_t size;\n	size_t used;\n};\n\ngj_Mem_Stack gj_initMemStack (size_t size) {\n	gj_Mem_Stack memStack = {};\n\n	memStack.mem = (char*)VirtualAlloc(0, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);\n	if (memStack.mem) {\n		memStack.size = size;\n	} else {\n		assert(false);\n	}\n\n	return memStack;\n}\n\nchar *gj_pushMemStack (gj_Mem_Stack *memStack, size_t size) {\n	if (memStack->used + size <= memStack->size) {\n		char *result = memStack->mem + memStack->used;\n		memStack->used += size;\n		return result;\n	} else {\n		// printf(\"Ran out of memory %i/%i \\n\", memStack->used + size, memStack->size);\n		assert(false);\n	}\n\n	return NULL;\n}\n\nvoid gj_popMemStack (gj_Mem_Stack *memStack, size_t size) {\n	if (size <= memStack->used) {\n		memStack->used -= size;\n	} else {\n		assert(false);\n	}\n}\n\nvoid testFunction () {\n\n	gj_Mem_Stack memStack = {};\n\n	char *mem = gj_pushMemStack(&memStack, 1024);\n\n	// fuck\n\n}\n\nvoid GetWin32ErrorString (char *str, int size) {\n	DWORD error = GetLastError();\n	FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, error,\n				   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), str, size, NULL);\n}\n\ngj_Data gj_readFile (char *file, gj_Mem_Stack *memStack) {\n	gj_Data data = {};\n\n	HANDLE handle = CreateFileA(file, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);\n\n	if (handle != INVALID_HANDLE_VALUE) {\n		LARGE_INTEGER size64;\n		if (GetFileSizeEx(handle, &size64)) {\n			unsigned int size = (unsigned int)size64.QuadPart;\n			data.mem = gj_pushMemStack(memStack, size);\n\n			if (data.mem) {\n				DWORD bytesRead;\n				if (ReadFile(handle, data.mem, size, &bytesRead, 0)\n					&& size == bytesRead) {\n					data.size = size;\n				} else {\n					VirtualFree(data.mem, 0, MEM_RELEASE);\n					data.mem = 0;\n				}\n			}\n		}\n\n		CloseHandle(handle);\n	} else {\n		// DWORD error = GetLastError();\n		char str[256];\n		GetWin32ErrorString(str, 256);\n		assert(false);\n	}\n\n	return data;\n}",
+			"file": "code/gj_lib.h",
+			"file_size": 2816,
+			"file_write_time": 131085057340057435,
+			"settings":
+			{
+				"buffer_size": 2816,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/vulkan.cc",
+			"settings":
+			{
+				"buffer_size": 8277,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/W/lib/vulkan/vulkan.h",
+			"settings":
+			{
+				"buffer_size": 179429,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/W/lib/vulkan/vk_platform.h",
+			"settings":
+			{
+				"buffer_size": 4428,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/directx11.cc",
+			"settings":
+			{
+				"buffer_size": 9271,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/build.bat",
+			"settings":
+			{
+				"buffer_size": 907,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "build/graphics_win32.i",
+			"settings":
+			{
+				"buffer_size": 2737322,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "code/mesh.cc",
+			"settings":
+			{
+				"buffer_size": 6801,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/cubemap.glsl",
+			"settings":
+			{
+				"buffer_size": 757,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/simple.glsl",
+			"settings":
+			{
+				"buffer_size": 539,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "code/shared.glsl",
+			"settings":
+			{
+				"buffer_size": 81,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "build/smooth.obj",
+			"settings":
+			{
+				"buffer_size": 524628,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "build/119.obj",
+			"settings":
+			{
+				"buffer_size": 609706,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "build/cylinder.obj",
+			"settings":
+			{
+				"buffer_size": 5900,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "build/test.obj",
+			"settings":
+			{
+				"buffer_size": 28188,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "build/1v5.obj",
+			"settings":
+			{
+				"buffer_size": 276038,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "build/cube.obj",
+			"settings":
+			{
+				"buffer_size": 735,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/W/SpaceGame/build/assets/models/1v5.obj",
+			"settings":
+			{
+				"buffer_size": 276038,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "graphics_win32.cc\n[Finished in 0.6s]",
+			"settings":
+			{
+				"buffer_size": 36,
 				"line_ending": "Unix",
 				"name": "Build output",
 				"scratch": true
@@ -67,7 +254,7 @@
 		[
 			[
 				"package",
-				"Package Control: Install Package"
+				"Package Control: List Packages"
 			],
 			[
 				"todo",
@@ -78,7 +265,7 @@
 				"PackageResourceViewer: Open Resource"
 			]
 		],
-		"width": 400.0
+		"width": 456.0
 	},
 	"console":
 	{
@@ -104,6 +291,13 @@
 	],
 	"file_history":
 	[
+		"/W/GraphicsDemo/code/gj_lib.h",
+		"/C/Users/Matt/AppData/Local/Programs/Git/ReleaseNotes.html",
+		"/C/Users/Matt/Downloads/bezierCurve/bezierCurve/main.cpp",
+		"/C/Users/Matt/Desktop/cl_crash.txt",
+		"/W/GraphicsDemo/gj_lib.h",
+		"/W/gj_lib.h",
+		"/W/GraphicsDemo/code/opengl.cc",
 		"/C/Users/Matt/AppData/Roaming/Sublime Text 3/Packages/User/NewBuildSystem.sublime-build",
 		"/W/SpaceGame/code/render_opengl.cc",
 		"/C/Users/Matt/AppData/Roaming/Sublime Text 3/Packages/User/Preferences.sublime-settings",
@@ -179,7 +373,7 @@
 	],
 	"find":
 	{
-		"height": 24.0
+		"height": 34.0
 	},
 	"find_in_files":
 	{
@@ -194,6 +388,26 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"result",
+			"models",
+			"1280",
+			"720",
+			"1280",
+			"cross",
+			"cameraMatrix",
+			"%",
+			"proj",
+			"projection",
+			"Camera",
+			"xRotation",
+			"glEnable(GL_TEX",
+			"GL_UNSIGNED_INT",
+			"gl_Vertex",
+			"glFrameBufferTexture2D",
+			"loadMOdel",
+			"model.",
+			"tempModel.",
+			"include",
 			"Entity_Character",
 			"RState",
 			"PushFont",
@@ -301,27 +515,7 @@
 			"DrawDebug",
 			"LoadSimplePoint",
 			"CharacterFireWeapons",
-			"DebugRenderCollider",
-			"Player",
-			"AddEntity",
-			"GetPlayer",
-			"AddPlayer",
-			"EntityCount",
-			"PLAYER_COUINT",
-			"CameraOffset",
-			"#include",
-			"RenderBuffer",
-			"StarMap",
-			"memory",
-			"GetShader",
-			"struct shader",
-			"shader",
-			"SCALE_IDENTITY",
-			"DrawStaticDebugQuad",
-			"Font",
-			"s.y",
-			"Descent",
-			"Ascent"
+			"DebugRenderCollider"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -329,6 +523,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"test"
 		],
 		"reverse": false,
 		"show_context": true,
@@ -348,15 +543,222 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 9704,
+						"buffer_size": 3106,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								513,
+								513
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "code/opengl.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 37822,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								15910,
+								15910
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 7168.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "code/depth.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 587,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								111,
+								111
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "code/shader.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2506,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								627,
+								627
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/C++/C.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "code/wire.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 332,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								332,
+								332
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 23,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "code/shader.hlsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 879,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								592,
+								592
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 24,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "code/gj_lib.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2816,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1349,
+								1349
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 304.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 22,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "code/vulkan.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8277,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								420,
+								420
 							]
 						],
 						"settings":
@@ -368,23 +770,377 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 29,
 					"type": "text"
 				},
 				{
-					"buffer": 1,
+					"buffer": 8,
+					"file": "/W/lib/vulkan/vulkan.h",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3017,
+						"buffer_size": 179429,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								3017,
-								3017
+								678,
+								678
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 28,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "/W/lib/vulkan/vk_platform.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4428,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								624,
+								624
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 27,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "code/directx11.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9271,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								8114,
+								8114
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 4115.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 26,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "code/build.bat",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 907,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								907,
+								907
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/Batch File/Batch File.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "build/graphics_win32.i",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2737322,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2730158,
+								2730178
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 4638236.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 25,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 3,
+					"file": "code/shader.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2506,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								900,
+								900
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/C++/C.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 384.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "code/mesh.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6801,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4732,
+								4732
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 2568.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "code/cubemap.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 757,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								757,
+								757
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 15,
+					"file": "code/simple.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 539,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								257,
+								257
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/C++/C.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 13,
+					"type": "text"
+				},
+				{
+					"buffer": 16,
+					"file": "code/shared.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 81,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								81,
+								81
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "code/depth.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 587,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								576,
+								576
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "code/wire.glsl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 332,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								332,
+								332
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				},
+				{
+					"buffer": 17,
+					"file": "build/smooth.obj",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 524628,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								302,
+								302
 							]
 						],
 						"settings":
@@ -395,7 +1151,267 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 15,
+					"type": "text"
+				},
+				{
+					"buffer": 18,
+					"file": "build/119.obj",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 609706,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								81,
+								81
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "code/opengl.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 37822,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								36375,
+								36375
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 17053.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 19,
+					"file": "build/cylinder.obj",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5900,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								110,
+								110
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 18,
+					"type": "text"
+				},
+				{
+					"buffer": 20,
+					"file": "build/test.obj",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 28188,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1008,
+								1008
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 17,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "code/build.bat",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 907,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								907,
+								907
+							]
+						],
+						"settings":
+						{
+							"history_list_is_closing": true,
+							"syntax": "Packages/Batch File/Batch File.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 16,
+					"type": "text"
+				},
+				{
+					"buffer": 21,
+					"file": "build/1v5.obj",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 276038,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1955,
+								1955
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 576.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 20,
+					"type": "text"
+				},
+				{
+					"buffer": 22,
+					"file": "build/cube.obj",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 735,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								382,
+								382
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 19,
+					"type": "text"
+				},
+				{
+					"buffer": 23,
+					"file": "/W/SpaceGame/build/assets/models/1v5.obj",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 276038,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								705,
+								705
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 21,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 24,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 36,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								36,
+								36
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
 					"type": "text"
 				}
 			]
@@ -418,11 +1434,25 @@
 				0,
 				1,
 				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			],
+			[
+				2,
+				0,
+				3,
+				1
 			]
 		],
 		"cols":
 		[
 			0.0,
+			0.395625,
+			0.7975,
 			1.0
 		],
 		"rows":
@@ -444,7 +1474,7 @@
 	"project": "GraphicsDemo.sublime-project",
 	"replace":
 	{
-		"height": 44.0
+		"height": 62.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -454,8 +1484,140 @@
 		"selected_items":
 		[
 			[
+				"opengl",
+				"code\\opengl.cc"
+			],
+			[
+				"mesh",
+				"code\\mesh.cc"
+			],
+			[
+				"shader",
+				"code\\shader.glsl"
+			],
+			[
+				"win32",
+				"code\\graphics_win32.cc"
+			],
+			[
+				"gj",
+				"code\\gj_lib.h"
+			],
+			[
+				"glsl",
+				"code\\shader.glsl"
+			],
+			[
+				".obj",
+				"W:\\GraphicsDemo\\build\\119.obj"
+			],
+			[
+				"cube",
+				"code\\cubemap.glsl"
+			],
+			[
 				"openg",
-				"code\\render_opengl.h"
+				"code\\opengl.cc"
+			],
+			[
+				"opeg",
+				"code\\opengl.cc"
+			],
+			[
+				"buid",
+				"code\\build.bat"
+			],
+			[
+				"wire",
+				"code\\wire.glsl"
+			],
+			[
+				"depth",
+				"code\\depth.glsl"
+			],
+			[
+				"simple",
+				"code\\simple.glsl"
+			],
+			[
+				"simgp",
+				"code\\simple.glsl"
+			],
+			[
+				"win",
+				"code\\graphics_win32.cc"
+			],
+			[
+				"ope",
+				"code\\opengl.cc"
+			],
+			[
+				"build",
+				"Build output"
+			],
+			[
+				"sahder",
+				"code\\shader.glsl"
+			],
+			[
+				"open",
+				"code\\opengl.cc"
+			],
+			[
+				"",
+				"code\\shader.glsl"
+			],
+			[
+				"bu",
+				"code\\build.bat"
+			],
+			[
+				".i",
+				"build\\graphics_win32.i"
+			],
+			[
+				"bui",
+				"code\\build.bat"
+			],
+			[
+				"direct",
+				"code\\directx11.cc"
+			],
+			[
+				"direc",
+				"code\\directx11.cc"
+			],
+			[
+				"oen",
+				"code\\opengl.cc"
+			],
+			[
+				"diret",
+				"code\\directx11.cc"
+			],
+			[
+				"vulk",
+				"code\\vulkan.cc"
+			],
+			[
+				"buil",
+				"code\\build.bat"
+			],
+			[
+				"graph",
+				"code\\graphics_win32.cc"
+			],
+			[
+				"grap",
+				"code\\graphics_win32.cc"
+			],
+			[
+				"gra",
+				"code\\graphics_win32.cc"
+			],
+			[
+				"vulka",
+				"code\\vulkan.cc"
 			],
 			[
 				"entity",
@@ -466,20 +1628,12 @@
 				"code\\game.cc"
 			],
 			[
-				"opengl",
-				"code\\render_opengl.cc"
-			],
-			[
 				"debug",
 				"code\\debug.cc"
 			],
 			[
 				"math",
 				"code\\math.cc"
-			],
-			[
-				"win32",
-				"code\\win32.cc"
 			],
 			[
 				"enitty",
@@ -502,20 +1656,8 @@
 				"code\\asset.h"
 			],
 			[
-				"open",
-				"code\\render_opengl.cc"
-			],
-			[
-				"build",
-				"code\\build.bat"
-			],
-			[
 				"dsound",
 				"code\\dsound.cc"
-			],
-			[
-				"",
-				"code\\entity_sim.cc"
 			],
 			[
 				"asset_share",
@@ -594,10 +1736,6 @@
 				"code\\asset.cc"
 			],
 			[
-				"shader",
-				"shader_data.h"
-			],
-			[
 				"shaderproces",
 				"code\\asset_packer\\shader_processor.cc"
 			],
@@ -646,10 +1784,6 @@
 				"code\\asset_shared.h"
 			],
 			[
-				"bui",
-				"code\\build_release.bat"
-			],
-			[
 				"asset_sa",
 				"code\\asset_shared.h"
 			],
@@ -690,10 +1824,6 @@
 				"code\\platform.h"
 			],
 			[
-				"win",
-				"code\\win32.h"
-			],
-			[
 				"entity_",
 				"code\\entity_sim.cc"
 			],
@@ -708,10 +1838,6 @@
 			[
 				"model",
 				"code\\shaders\\model.frag"
-			],
-			[
-				"cube",
-				"W:\\SpaceGame\\build\\assets\\models\\cube.obj"
 			],
 			[
 				"entity_si",
@@ -752,8 +1878,8 @@
 	},
 	"show_minimap": true,
 	"show_open_files": false,
-	"show_tabs": true,
-	"side_bar_visible": true,
+	"show_tabs": false,
+	"side_bar_visible": false,
 	"side_bar_width": 259.0,
 	"status_bar_visible": false,
 	"template_settings":

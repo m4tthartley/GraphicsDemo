@@ -1,5 +1,5 @@
 
-#pragma pack(push, 1)
+/*#pragma pack(push, 1)
 union Vec2 {
 	struct {
 		float x;
@@ -29,16 +29,6 @@ union Vec3 {
 	Vec2 xy;
 };
 
-Vec3 operator+ (Vec3 vec1, Vec3 vec2) {
-	Vec3 result = {vec1.x+vec2.x, vec1.y+vec2.y, vec1.z+vec2.z};
-	return result;
-}
-
-Vec3 operator* (Vec3 vec, float num) {
-	Vec3 result = {vec.x*num, vec.y*num, vec.z*num};
-	return result;
-}
-
 union Vec4 {
 	struct {
 		float x;
@@ -53,7 +43,17 @@ union Vec4 {
 union Mat4 {
 	float m[16];
 };
-#pragma pack(pop)
+#pragma pack(pop)*/
+
+Vec3 operator+ (Vec3 vec1, Vec3 vec2) {
+	Vec3 result = {vec1.x+vec2.x, vec1.y+vec2.y, vec1.z+vec2.z};
+	return result;
+}
+
+Vec3 operator* (Vec3 vec, float num) {
+	Vec3 result = {vec.x*num, vec.y*num, vec.z*num};
+	return result;
+}
 
 struct Depth_Cube_Frame_Buffer {
 	GLuint id;
@@ -190,7 +190,7 @@ typedef void glBindBuffer_proc (GLenum target, GLuint buffer);
 glBindBuffer_proc *glBindBuffer;
 
 
-gj_Mem_Stack globalMemStack;
+gjMemStack globalMemStack;
 
 Vec2 defaultViewport = {1280, 720};
 float playerFov = 70;
@@ -200,6 +200,7 @@ GLuint globalWireShader;
 GLuint depthShader;
 GLuint simpleShader;
 GLuint cubeMapShader;
+GLuint pbr_shader;
 
 #include "mesh.cc"
 
@@ -329,7 +330,7 @@ GLuint createShader (char *file) {
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-	gj_Data shaderData = gj_readFile(file, &globalMemStack);
+	gjData shaderData = gjReadFile(file, &globalMemStack);
 
 	char *vertexSource[2];
 	char *fragmentSource[2];
@@ -448,7 +449,7 @@ void APIENTRY openglDebugCallback (GLenum source, GLenum type, GLuint id, GLenum
 }
 
 void initOpengl (HWND windowHandle) {
-	globalMemStack = gj_initMemStack(megabytes(50));
+	globalMemStack = gjInitMemStack(megabytes(50));
 
 	createWin32OpenglContext(windowHandle);
 
@@ -462,6 +463,7 @@ void initOpengl (HWND windowHandle) {
 	depthShader = createShader("../code/depth.glsl");
 	simpleShader = createShader("../code/simple.glsl");
 	cubeMapShader = createShader("../code/cubemap.glsl");
+	pbr_shader = createShader("../code/pbr.glsl");
 
 	/*fiz (globalModel->indexCount) {
 		Vec3 vertex = globalModel->vertices[globalModel->indices[i]].vertex;
@@ -487,10 +489,10 @@ void initOpengl (HWND windowHandle) {
 	shadowFrameBuffer = createDepthCubeFrameBuffer();
 }
 
-float rads (float degs) {
+/*float rads (float degs) {
 	float result = (degs / 180.0f) * PI;
 	return result;
-}
+}*/
 
 /*
 	OpenGL perspective matrix
@@ -593,7 +595,7 @@ Mat4 scaleMatrix (float scale) {
 	return result;
 }
 
-Mat4 operator* (Mat4 mat1, Mat4 mat2) {
+/*Mat4 operator* (Mat4 mat1, Mat4 mat2) {
 	Mat4 result = {
 		mat1.m[0]*mat2.m[0] + mat1.m[1]*mat2.m[4] + mat1.m[2]*mat2.m[8] + mat1.m[3]*mat2.m[12],
 		mat1.m[0]*mat2.m[1] + mat1.m[1]*mat2.m[5] + mat1.m[2]*mat2.m[9] + mat1.m[3]*mat2.m[13],
@@ -616,7 +618,7 @@ Mat4 operator* (Mat4 mat1, Mat4 mat2) {
 		mat1.m[12]*mat2.m[3] + mat1.m[13]*mat2.m[7] + mat1.m[14]*mat2.m[11] + mat1.m[15]*mat2.m[15],
 	};
 	return result;
-}
+}*/
 
 float length (Vec3 v) {
 	float result = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
@@ -979,7 +981,7 @@ void drawOpengl (HWND windowHandle) {
 	GetCursorPos(&mousePos);
 	SHORT mouseLeftDown = GetAsyncKeyState(VK_LBUTTON);
 	Vec2 mouseMovement = {mousePos.x - globalMousePos.x, mousePos.y - globalMousePos.y};
-	globalMousePos = vec2(mousePos.x, mousePos.y);
+	globalMousePos = {mousePos.x, mousePos.y};
 
 	if (mouseLeftDown) {
 		yRotation += mouseMovement.x * 0.01f;
@@ -1129,4 +1131,49 @@ void drawOpengl (HWND windowHandle) {
 #endif
 
 	SwapBuffers(hdc);
+}
+
+void stuff() {
+	glViewport(0, 0, defaultViewport.x, defaultViewport.y);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	Mat4 cam = cameraMatrix({0.0f, 0.0f, 3.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f});
+	Mat4 projection = createPerspectiveMatrix(70, defaultViewport.x/defaultViewport.y, 0.1f, 100.0f);
+	Mat4 mat = identityMatrix();
+
+	glUseProgram(pbr_shader);
+	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "uProjMatrix"), 1, GL_FALSE, projection.m);
+	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "uRotationMatrix"), 1, GL_FALSE, mat.m);
+	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "uTransform"), 1, GL_FALSE, mat.m);
+	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "cameraTransform"), 1, GL_FALSE, cam.m);
+	glUniform4f(glGetUniformLocation(pbr_shader, "lightPosition"), 5.0f, 5.0f, 5.0f, 1.0f);
+	
+	float verts[] = {
+		-1.0f,  1.0f, 0.0f,
+		 1.0f,  1.0f, 0.0f,
+		 1.0f, -1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+	};
+	float norms[] = {
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+	};
+	int indices[] = {
+		0, 1, 2,
+		0, 2, 3,
+	};
+
+	glBindBuffer(GL_ARRAY_BUFFER, models[2].vertexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, models[2].indexBuffer);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	// 2, 4
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), 0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), (void*)sizeof(Vec3));
+
+	glDrawElements(GL_TRIANGLES, models[2].indexCount, GL_UNSIGNED_INT, 0);
 }

@@ -110,6 +110,9 @@ void DX11Init (dx_state *dx)
 
 	//D3DXMatrixOrthoOffCenterRH(&OrthoMatrix, 0, 1280, 0, 720, -10, 10);
 
+	// todo: compile shader from string
+	//		 https://msdn.microsoft.com/en-us/library/windows/desktop/dd607324(v=vs.85).aspx
+
 	// Temp
 	ID3D10Blob *VertexShaderBlob;
 	ID3D10Blob *PixelShaderBlob;
