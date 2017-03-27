@@ -189,6 +189,9 @@ glBufferData_proc *glBufferData;
 typedef void glBindBuffer_proc (GLenum target, GLuint buffer);
 glBindBuffer_proc *glBindBuffer;
 
+typedef GLint glGetAttribLocation_proc(GLuint program, const GLchar *name);
+glGetAttribLocation_proc *glGetAttribLocation;
+
 
 gjMemStack globalMemStack;
 
@@ -210,7 +213,7 @@ GLuint pbr_shader;
 // Model *globalTestModel;
 // Model *globalBigShipModel;
 Model models[6];
-int selectedModel = 0;
+int selectedModel = 1;
 
 Vec2 globalMousePos;
 float globalScroll;
@@ -264,6 +267,8 @@ void loadOpenglExtensions () {
 	loadExtension(glGenBuffers);
 	loadExtension(glBufferData);
 	loadExtension(glBindBuffer);
+
+	loadExtension(glGetAttribLocation);
 }
 
 void createWin32OpenglContext (HWND windowHandle) {
@@ -1142,10 +1147,13 @@ void stuff() {
 	Mat4 projection = createPerspectiveMatrix(70, defaultViewport.x/defaultViewport.y, 0.1f, 100.0f);
 	Mat4 mat = identityMatrix();
 
+	static float rotation = 0.0f;
+	rotation += 0.01f;
+
 	glUseProgram(pbr_shader);
 	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "uProjMatrix"), 1, GL_FALSE, projection.m);
-	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "uRotationMatrix"), 1, GL_FALSE, mat.m);
-	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "uTransform"), 1, GL_FALSE, mat.m);
+	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "uRotationMatrix"), 1, GL_FALSE, yRotate(rotation).m);
+	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "uTransform"), 1, GL_FALSE, yRotate(rotation).m);
 	glUniformMatrix4fv(glGetUniformLocation(pbr_shader, "cameraTransform"), 1, GL_FALSE, cam.m);
 	glUniform4f(glGetUniformLocation(pbr_shader, "lightPosition"), 5.0f, 5.0f, 5.0f, 1.0f);
 	
@@ -1166,14 +1174,21 @@ void stuff() {
 		0, 2, 3,
 	};
 
-	glBindBuffer(GL_ARRAY_BUFFER, models[2].vertexBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, models[2].indexBuffer);
+	Model model = models[3];
+	glBindBuffer(GL_ARRAY_BUFFER, model.vertexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.indexBuffer);
 
+	// glDisableClientState(GL_VERTEX_ARRAY);
+	// glDisableClientState(GL_NORMAL_ARRAY);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	// 2, 4
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), 0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), (void*)sizeof(Vec3));
+	glVertexAttribPointer(glGetAttribLocation(pbr_shader, "vertex"), 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), 0);
+	int offset = offsetof(Model_Vertex, normal);
+	int size = sizeof(Model_Vertex);
+	glVertexAttribPointer(glGetAttribLocation(pbr_shader, "inNormal"), 3, GL_FLOAT, GL_FALSE, sizeof(Model_Vertex), (void*)offset);
 
-	glDrawElements(GL_TRIANGLES, models[2].indexCount, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, model.indexCount, GL_UNSIGNED_INT, 0);
+
+	SwapBuffers(hdc);
 }

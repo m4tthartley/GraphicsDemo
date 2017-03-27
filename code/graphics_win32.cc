@@ -17,6 +17,8 @@
 #include "w:/lib/gj/gj_lib.h"
 #include "w:/lib/gj/gj_win32.cc"
 
+HDC hdc;
+
 #ifdef RENDER_OPENGL
 #include "opengl.cc"
 #endif
@@ -59,7 +61,7 @@ int CALLBACK WinMain (HINSTANCE hInstance,
 	if (RegisterClassA(&WindowClass))
 	{
 		Window = CreateWindowExA(0, WindowClass.lpszClassName, "Graphics Demo", WS_OVERLAPPEDWINDOW|WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, defaultViewport.x, defaultViewport.y, 0, 0, hInstance, 0);
-		HDC hdc = GetDC(Window);
+		hdc = GetDC(Window);
 
 		// DWORD style = GetWindowLong(Window, GWL_STYLE);
 		// SetWindowLong(Window, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
@@ -136,9 +138,8 @@ int CALLBACK WinMain (HINSTANCE hInstance,
 				DX11Draw(&dx);
 #endif
 #ifdef RENDER_OPENGL
-				// drawOpengl(Window);
-				stuff();
-				SwapBuffers(hdc);
+				drawOpengl(Window);
+				// stuff();
 #endif
 			}
 		}

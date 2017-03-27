@@ -10,8 +10,8 @@ uniform vec4 lightPosition;
 
 #ifdef VERTEX_SHADER
 
-	layout(location = 0) in vec3 vertex;
-	layout(location = 1) in vec3 inNormal;
+	in vec3 vertex;
+	in vec3 inNormal;
 	// layout(location
 
 	// out vec4 vColor;
@@ -53,7 +53,7 @@ uniform vec4 lightPosition;
 
 		float lightDot = dot(vNormal, lightDir);
 		// fragmentResult = vec4(1.0f, 1.0f, 1.0f, 1.0f) * lightDot;
-		fragmentResult = vec4(vNormal/**0.5f + 0.5f*/, 1.0f);
+		fragmentResult = vec4(vNormal, 1.0f);
 	}
 
 #endif
